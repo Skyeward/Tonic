@@ -6,7 +6,6 @@ from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
 
-
 menu_options = {}
 customers = []
 available_drinks = []
@@ -249,7 +248,21 @@ def order_new_customer(order):
 
 
 def order_remove_drink(order):
-    pass
+    order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
+    order_drinks = [""] + get_instance_variables(order.drinks, "name")
+
+    print_menu = i_menu({"CUSTOMERS": order_customers, "DRINKS", order_drinks}, "CHOOSE DRINK TO REMOVE", True)
+
+    for line in print_menu:
+        print(line)
+
+    chosen_index = get_valid_index(len(order_customers))
+
+    if chosen_index == 0:
+        print("Cancelling...\n")
+        return
+
+    order.remove_drink(order_customers[chosen_index - 1])
 
 
 def exit_app():

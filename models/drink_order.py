@@ -1,4 +1,5 @@
 from datetime import datetime
+from tools.tonic_generic import get_instance_variables
 
 class DrinkOrder():
     def __init__(self):
@@ -14,7 +15,11 @@ class DrinkOrder():
 
 
     def remove_drink(self, customer):
-        pass
+        customer_names = get_instance_variables(self.customers, "name")
+        customer_to_remove_index = customer_names.index(customer.name)
+
+        self.customers.pop(customer_to_remove_index)
+        self.drinks.pop(customer_to_remove_index)
     
 
     def set_placement_time(self):
