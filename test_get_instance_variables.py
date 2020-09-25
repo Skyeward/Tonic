@@ -17,7 +17,6 @@ class TestGetInstanceVariables(unittest.TestCase):
         #Act
         actual = get_instance_variables(mock_drink_list, "name")
 
-
         #Assert
         self.assertEqual(actual, ["test_tea", "test_water"])
 

@@ -280,8 +280,33 @@ def order_remove_drink(order):
     return True
 
 
-def order_add_from_favourites():
-    pass
+def order_add_from_favourites(order):
+    saved_customers = customers.copy()
+    saved_customer_names = get_instance_variables(customers, "name")
+    order_customer_names = get_instance_variables(order.customers, "name")
+
+    for i, name in enumerate(saved_customer_names):
+        if name in order_customer_names:
+            saved_customers.pop(i)
+            saved_customer_names.pop(i)
+    
+    saved_customer_drinks = get_instance_variables(saved_customers, "favourite_drink")
+    saved_customer_drinks_names = get_instance_variables(saved_customer_drinks, "name")
+
+    print_menu = i_menu({"CUSTOMER": ["DONE"] + saved_customer_names, "DRINK": [""] + saved_customer_drinks_names}, "ADD DRINK", True)
+
+    for line in print_menu:
+        print(line)
+
+    chosen_index = get_valid_index(len(saved_customer_names) + 1)
+
+    if chosen_index != 0:
+        order.add_drink(saved_customers[chosen_index - 1], saved_customer_drinks[chosen_index - 1])
+
+    if chosen_index == 0 or len(saved_customer_names) == 1:
+        return True
+
+    return order_add_from_favourites(order)
 
 
 def order_confirm(order):
