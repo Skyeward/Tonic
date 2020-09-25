@@ -60,6 +60,7 @@ def populate_order_menu_options():
     return_dict["Change Runner"] = order_choose_runner
     return_dict["Add Guest"] = order_new_customer
     return_dict["Remove Drink Selection"] = order_remove_drink
+    return_dict["Confirm Order"] = order_confirm
 
     return return_dict
 
@@ -191,6 +192,8 @@ def order_menu_loop(new_order = None):
     if len(new_order.customers) == 0:
         options_to_print.remove("Remove Drink Selection")
 
+    #if new_order.runner == None or 
+
     #PRINTS ORDER MENU, GETS USER CHOICE AND RUNS FUNCTION
     menu_to_print = i_menu({"": options_to_print}, "ORDER OPTIONS")
     
@@ -204,8 +207,6 @@ def order_menu_loop(new_order = None):
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
         order_menu_loop(new_order)
-    # elif chosen_option == order_confirm:
-    #     order_history.append(new_order)
 
 
 def order_cancel(order): #order not required for this function, but is passed to all order functions
@@ -268,6 +269,21 @@ def order_remove_drink(order):
 
     order.remove_drink(order.customers[chosen_index - 1])
     return True
+
+
+def order_confirm(order):
+    confirm_table = i_menu({"": ["No", "Yes"]}, "CONFIRM ORDER?")
+
+    for line in confirm_table:
+        print(line)
+
+    chosen_index = get_valid_index(2)
+
+    if chosen_index == 0:
+        return True
+    else:
+        order_history.append(order)
+        return False
 
 
 def exit_app():
