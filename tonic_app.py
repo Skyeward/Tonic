@@ -193,19 +193,18 @@ def order_menu_loop(new_order = None):
 
     if len(new_order.customers) == 0:
         options_to_print.remove("Remove Drink Selection")
+        options_to_print.remove("View Order")
 
     if new_order.runner == None or len(new_order.customers) == 0:
         options_to_print.remove("Confirm Order")
 
     #PRINTS ORDER MENU, GETS USER CHOICE AND RUNS FUNCTION
     if new_order.runner == None:
-        runner_exists = False
-        subheader = ""
+        subheader = "NO RUNNER CHOSEN"
     else:
-        runner_exists = True
         subheader = f"{new_order.runner.name.upper()}'S DRINKS RUN"
     
-    menu_to_print = i_menu({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", runner_exists)
+    menu_to_print = i_menu({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
     
     for line in menu_to_print:
         print(line)
@@ -234,6 +233,15 @@ def order_cancel(order): #order not required for this function, but is passed to
 
 
 def order_view(order):
+    customer_names = get_instance_variables(order.customers, "name")
+    drink_names = get_instance_variables(order.drinks, "name")
+
+    print_menu = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, "CURRENT ORDER", True)
+    
+    for line in print_menu:
+        print(line)
+            
+    print()
     return True
 
 

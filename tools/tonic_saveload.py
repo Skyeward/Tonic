@@ -25,10 +25,10 @@ def json_save(save_path: str, instances: Iterable[type]) -> str:
             
             json.dump(serializable_instances, file_)
         
-        print("SAVE SUCCESS!")
+        #print("SAVE SUCCESS!")
         return True
     except:
-        print("SAVE FAIL!")
+        #print("SAVE FAIL!")
         return False
 
 
@@ -44,14 +44,13 @@ def json_load(load_path: str) -> [type]:
             instance_list = []
             
             for dict_ in json.load(file_):
-                print(dict_)
                 new_instance = _make_instance_from_vars(dict_)
                 instance_list.append(new_instance)
 
-        print("LOAD SUCCESS!")
+        #print("LOAD SUCCESS!")
         return instance_list
     except:
-        print("LOAD FAIL!")
+        #print("LOAD FAIL!")
         return None
 
 
@@ -76,13 +75,8 @@ def _make_instance_from_vars(dict_):
     for i, var in enumerate(list(dict_.values())[0]):
         if type(var) == dict:
             key = list(var.keys())[0]
-            print("key: ")
-            print(key)
             if type(key) == str:
-                print("key is a string")
                 if key.find(class_flag) != -1:
-                    print("making an instance from:")
-                    print(var)
                     var = _make_instance_from_vars(var)
         
         var_name = var_names[i]

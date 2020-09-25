@@ -187,8 +187,6 @@ def get_instance_variables(instances: [type], variable_name: str):
     return_list = []
     
     for instance in instances:
-        print("the next line is the instance")
-        print(instance)
         return_list.append(vars(instance)[variable_name])
 
     return return_list
