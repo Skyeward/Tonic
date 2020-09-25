@@ -59,6 +59,7 @@ def populate_order_menu_options():
     return_dict["Choose Runner"] = order_choose_runner
     return_dict["Change Runner"] = order_choose_runner
     return_dict["Add Guest"] = order_new_customer
+    return_dict["Add Drinks From Favourites"] = order_add_from_favourites
     return_dict["Remove Drink Selection"] = order_remove_drink
     return_dict["Confirm Order"] = order_confirm
 
@@ -192,10 +193,18 @@ def order_menu_loop(new_order = None):
     if len(new_order.customers) == 0:
         options_to_print.remove("Remove Drink Selection")
 
-    #if new_order.runner == None or 
+    if new_order.runner == None or len(new_order.customers) == 0:
+        options_to_print.remove("Confirm Order")
 
     #PRINTS ORDER MENU, GETS USER CHOICE AND RUNS FUNCTION
-    menu_to_print = i_menu({"": options_to_print}, "ORDER OPTIONS")
+    if new_order.runner == None:
+        runner_exists = False
+        subheader = ""
+    else:
+        runner_exists = True
+        subheader = f"{new_order.runner.name.upper()}'S DRINKS RUN"
+    
+    menu_to_print = i_menu({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", runner_exists)
     
     for line in menu_to_print:
         print(line)
@@ -269,6 +278,10 @@ def order_remove_drink(order):
 
     order.remove_drink(order.customers[chosen_index - 1])
     return True
+
+
+def order_add_from_favourites():
+    pass
 
 
 def order_confirm(order):
