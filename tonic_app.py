@@ -91,16 +91,16 @@ def view_customers():
 
 
 def add_customer():
-    new_customer = new_customer_instance()
+    new_customer = new_customer_instance(customers)
 
     if new_customer != None:
         customers.append(new_customer)
         save()
 
 
-def new_customer_instance():
+def new_customer_instance(customers_to_check_against):
     new_customer = Customer()
-    new_name = new_customer.choose_name(customers)
+    new_name = new_customer.choose_name(customers_to_check_against)
 
     if new_name == None:
         return None
@@ -251,7 +251,7 @@ def order_choose_runner(order, change_string = "CHOOSE"):
 
 
 def order_new_customer(order):
-    new_customer = new_customer_instance()
+    new_customer = new_customer_instance(order.customers)
 
     if new_customer == None:
         print("Cancelling...\n")
