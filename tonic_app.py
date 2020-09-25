@@ -59,7 +59,7 @@ def populate_order_menu_options():
     return_dict["Choose Runner"] = order_choose_runner
     return_dict["Change Runner"] = order_choose_runner
     return_dict["Add Guest"] = order_new_customer
-    return_dict["Remove Drink Selection"] = order_remove_customer
+    return_dict["Remove Drink Selection"] = order_remove_drink
 
     return return_dict
 
@@ -188,8 +188,11 @@ def order_menu_loop(new_order = None):
     else:
         options_to_print.remove("Choose Runner")
 
+    if len(new_order.customers) == 0:
+        options_to_print.remove("Remove Drink Selection")
+
     #PRINTS ORDER MENU, GETS USER CHOICE AND RUNS FUNCTION
-    menu_to_print = i_menu({"": options_to_print}, "WELCOME TO TONIC!")
+    menu_to_print = i_menu({"": options_to_print}, "ORDER OPTIONS")
     
     for line in menu_to_print:
         print(line)
@@ -201,8 +204,8 @@ def order_menu_loop(new_order = None):
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
         order_menu_loop(new_order)
-    elif chosen_option == order_confirm:
-        order_history.append(new_order)
+    # elif chosen_option == order_confirm:
+    #     order_history.append(new_order)
 
 
 def order_cancel(order): #order not required for this function, but is passed to all order functions
@@ -230,7 +233,7 @@ def order_choose_runner(order, change_string = "CHOOSE"):
 
     if chosen_index == 0:
         print("Cancelling...\n")
-        return
+        return True
 
     runner = customers[chosen_index - 1]
     order.runner = runner
@@ -242,16 +245,17 @@ def order_new_customer(order):
 
     if new_customer == None:
         print("Cancelling...\n")
-        return
+        return True
     
     order.add_drink(new_customer, new_customer.favourite_drink)
+    return True
 
 
 def order_remove_drink(order):
     order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
     order_drinks = [""] + get_instance_variables(order.drinks, "name")
 
-    print_menu = i_menu({"CUSTOMERS": order_customers, "DRINKS", order_drinks}, "CHOOSE DRINK TO REMOVE", True)
+    print_menu = i_menu({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
 
     for line in print_menu:
         print(line)
@@ -260,9 +264,10 @@ def order_remove_drink(order):
 
     if chosen_index == 0:
         print("Cancelling...\n")
-        return
+        return True
 
-    order.remove_drink(order_customers[chosen_index - 1])
+    order.remove_drink(order.customers[chosen_index - 1])
+    return True
 
 
 def exit_app():
