@@ -56,6 +56,7 @@ def populate_order_menu_options():
     return_dict = {}
 
     return_dict["Cancel Order"] = order_cancel
+    return_dict["View Order"] = order_view
     return_dict["Choose Runner"] = order_choose_runner
     return_dict["Change Runner"] = order_choose_runner
     return_dict["Add Guest"] = order_new_customer
@@ -230,6 +231,10 @@ def order_cancel(order): #order not required for this function, but is passed to
         return True
     else:
         return False
+
+
+def order_view(order):
+    return True
 
 
 def order_choose_runner(order, change_string = "CHOOSE"):
