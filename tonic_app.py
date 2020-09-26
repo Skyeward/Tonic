@@ -5,8 +5,8 @@ from tools.tonic_saveload import json_save as _json_save, json_load as json_load
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
+from models.menu_data import MenuData as MenuData
 
-menu_options = {}
 customers = []
 available_drinks = []
 order_history = []
@@ -26,45 +26,6 @@ def load():
     for instance in loaded_instances:
         type_as_string = type(instance).__name__
         global_data_lists[type_as_string].append(instance)
-
-
-def populate_menu_options():
-    "Adds all main menu options to the menu_options dictionary. Strings are keys, and function names are values."
-    
-    return_dict = {}
-    
-    return_dict["View Customers"] = view_customers
-    return_dict["Add Customer"] = add_customer
-    return_dict["Remove Customer"] = remove_customer
-    return_dict["View Drinks"] = view_drinks
-    return_dict["Add Drink"] = add_drink
-    return_dict["Remove Drink"] = remove_drink
-    # return_list.append([search, "Search"])
-    # return_list.append([view_order_history, "View Order History"])
-    return_dict["Place An Order"] = order_menu_loop
-    # return_list.append([ask_order_from_template, "Place An Order"])
-    # return_list.append([trains, "I Like Trains"])
-    return_dict["Force Save Data"] = save
-    return_dict["Exit App"] = exit_app
-
-    return return_dict
-
-
-def populate_order_menu_options():
-    "Adds all order menu options to the order_menu_options dictionary. Strings are keys, and function names are values."
-
-    return_dict = {}
-
-    return_dict["Cancel Order"] = order_cancel
-    return_dict["View Order"] = order_view
-    return_dict["Choose Runner"] = order_choose_runner
-    return_dict["Change Runner"] = order_choose_runner
-    return_dict["Add Guest"] = order_new_customer
-    return_dict["Add Drinks From Favourites"] = order_add_from_favourites
-    return_dict["Remove Drink Selection"] = order_remove_drink
-    return_dict["Confirm Order"] = order_confirm
-
-    return return_dict
 
 
 def save(): #(instances, new_data_name, new_data_name = "")
@@ -175,7 +136,7 @@ def remove_drink():
     save()
 
 
-def order_menu_loop(new_order = None):
+def order_menu_loop(menu_data, new_order):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
     if new_order == None:
@@ -184,12 +145,15 @@ def order_menu_loop(new_order = None):
     print()
     
     #ADDS OPTION STRINGS TO options_to_print AND REMOVES SOME OPTIONS UNDER SPECIFIC CONDITIONS
-    options_to_print = list(order_menu_options.keys())
+    options_to_print = list(menu_data.order_menu_options.keys())
 
     if new_order.runner == None:
         options_to_print.remove("Change Runner")
     else:
         options_to_print.remove("Choose Runner")
+
+    if len(customers) == 0:
+        options_to_print.remove("Add Drinks From Favourites")
 
     if len(new_order.customers) == 0:
         options_to_print.remove("Remove Drink Selection")
@@ -211,11 +175,12 @@ def order_menu_loop(new_order = None):
 
     chosen_index = get_valid_index(len(options_to_print))
     chosen_option = options_to_print[chosen_index]
-    is_loop = order_menu_options[chosen_option](new_order)
+    chosen_function = menu_data.order_menu_options[chosen_option]
+    is_loop = eval(chosen_function)(new_order)
 
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
-        order_menu_loop(new_order)
+        order_menu_loop(menu_data, new_order)
 
 
 def order_cancel(order): #order not required for this function, but is passed to all order functions
@@ -341,13 +306,13 @@ def exit_app():
     print("Exiting App...")
     
 
-def main_menu_loop():
+def main_menu_loop(menu_data):
     "Menu which serves as the root of the app, and is recursively run until app is exited."
 
     print()
 
     #ADDS OPTION STRINGS TO options_to_print AND REMOVES SOME OPTIONS UNDER SPECIFIC CONDITIONS
-    options_to_print = list(menu_options.keys())
+    options_to_print = list(menu_data.menu_options.keys())
 
     if save_synced == True:
         options_to_print.remove("Force Save Data")
@@ -372,16 +337,20 @@ def main_menu_loop():
 
     chosen_index = get_valid_index(len(options_to_print))
     chosen_option = options_to_print[chosen_index]
-    menu_options[chosen_option]()
+    chosen_function = menu_data.menu_options[chosen_option]
+
+    if chosen_function == "order_menu_loop":
+        order_menu_loop(menu_data, None)
+    else:
+        eval(chosen_function)()
 
     #LOOPS MENU UNLESS exit_app() WAS RUN
-    if menu_options[chosen_option] != exit_app:
-        main_menu_loop()
+    if menu_data.menu_options[chosen_option] != "exit_app":
+        main_menu_loop(menu_data)
 
 
 if __name__ == "__main__":
     load()
-    menu_options = populate_menu_options()
-    order_menu_options = populate_order_menu_options()
+    menu_data = MenuData()
     print(intro())
-    main_menu_loop()
+    main_menu_loop(menu_data)
