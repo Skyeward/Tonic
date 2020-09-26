@@ -37,9 +37,8 @@ def indexed_menu(columns: {str: Iterable[str]}, title: str = "", show_column_hea
                 columns[column_header][i] = ""
                 column_entry = ""
 
-            current_max_width = max_column_widths[column_number]
             width_to_compare = len(column_entry)
-            max_column_widths[column_number] = max(current_max_width, width_to_compare)
+            max_column_widths[column_number] = max(max_column_widths[column_number], width_to_compare)
 
     largest_index = max_column_length - 1
     max_index_column_width = len(str(largest_index))
@@ -245,3 +244,18 @@ def get_unique_string(unavailable_strings: [str], input_message: str, fail_messa
             input_is_unique = True
 
     return user_input
+
+def print_table_get_index(columns: {str: Iterable[str]}, title: str = "", show_column_headers: bool = False) -> int:
+    "Calls indexed_menu(), prints the resulting table, calls get_valid_index and returns the player's chosen index"
+    
+    print_table = indexed_menu(columns, title, show_column_headers)
+    final_line = print_table[-2]
+
+    for line in print_table:
+        print(line)
+
+    final_index_as_string = final_line.split()[1]
+    final_index = int(final_index_as_string)
+    chosen_index = get_valid_index(final_index + 1)
+
+    return chosen_index

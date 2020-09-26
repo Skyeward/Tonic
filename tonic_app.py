@@ -1,6 +1,7 @@
 from tools.tonic_launch import intro as intro
 from tools.tonic_generic import indexed_menu as i_menu, format_string as fmat
-from tools.tonic_generic import get_valid_index, get_instance_variables, get_unique_string
+from tools.tonic_generic import get_valid_index, get_instance_variables
+from tools.tonic_generic import get_unique_string, print_table_get_index
 from tools.tonic_saveload import json_save as _json_save, json_load as json_load
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
@@ -82,12 +83,7 @@ def remove_customer():
     customer_names += get_instance_variables(customers, "name")
     customer_drinks += get_instance_variables(get_instance_variables(customers, "favourite_drink"), "name")
 
-    customer_table = i_menu({"CUSTOMER": customer_names, "DRINK": customer_drinks}, "CHOOSE CUSTOMER TO REMOVE", True)
-
-    for line in customer_table:
-        print(line)
-
-    chosen_index = get_valid_index(len(customer_names) + 1)
+    chosen_index = print_table_get_index({"CUSTOMER": customer_names, "DRINK": customer_drinks}, "CHOOSE CUSTOMER TO REMOVE", True)
 
     if chosen_index == 0:
         return
@@ -120,22 +116,16 @@ def add_drink():
 
 def remove_drink():
     drinks = get_instance_variables(available_drinks, "name")
-
-    drinks_table = i_menu({"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
-
-    for line in drinks_table:
-        print(line)
-
-    chosen_index = get_valid_index(len(drinks) + 1)
+    chosen_index = print_table_get_index({"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
 
     if chosen_index == 0:
         return
-    
+
     drink_to_remove = available_drinks[chosen_index - 1]
     available_drinks.remove(drink_to_remove)
     save()
 
-
+#TODO: Make this save temporarily if you go back to the main menu during an order
 def order_menu_loop(menu_data, new_order):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
@@ -168,12 +158,7 @@ def order_menu_loop(menu_data, new_order):
     else:
         subheader = f"{new_order.runner.name.upper()}'S DRINKS RUN"
     
-    menu_to_print = i_menu({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
-    
-    for line in menu_to_print:
-        print(line)
-
-    chosen_index = get_valid_index(len(options_to_print))
+    chosen_index = print_table_get_index({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.order_menu_options[chosen_option]
     is_loop = eval(chosen_function)(new_order)
@@ -184,12 +169,7 @@ def order_menu_loop(menu_data, new_order):
 
 
 def order_cancel(order): #order not required for this function, but is passed to all order functions
-    confirm_table = i_menu({"": ["No", "Yes"]}, "CANCEL ORDER?")
-
-    for line in confirm_table:
-        print(line)
-
-    chosen_index = get_valid_index(2)
+    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CANCEL ORDER?")
 
     if chosen_index == 0:
         return True
@@ -212,12 +192,7 @@ def order_view(order):
 
 def order_choose_runner(order, change_string = "CHOOSE"):
     names = get_instance_variables(customers, "name")
-    names_table = i_menu({"": ["CANCEL"] + names}, "CHOOSE RUNNER")
-
-    for line in names_table:
-        print(line)
-
-    chosen_index = get_valid_index(len(names) + 1)
+    chosen_index = print_table_get_index({"": ["CANCEL"] + names}, "CHOOSE RUNNER")
 
     if chosen_index == 0:
         print("Cancelling...\n")
@@ -242,13 +217,7 @@ def order_new_customer(order):
 def order_remove_drink(order):
     order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
     order_drinks = [""] + get_instance_variables(order.drinks, "name")
-
-    print_menu = i_menu({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
-
-    for line in print_menu:
-        print(line)
-
-    chosen_index = get_valid_index(len(order_customers))
+    chosen_index = print_table_get_index({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
 
     if chosen_index == 0:
         print("Cancelling...\n")
@@ -257,7 +226,7 @@ def order_remove_drink(order):
     order.remove_drink(order.customers[chosen_index - 1])
     return True
 
-
+#TODO: Disallow when empty
 def order_add_from_favourites(order):
     saved_customers = customers.copy()
     saved_customer_names = get_instance_variables(customers, "name")
@@ -270,13 +239,7 @@ def order_add_from_favourites(order):
     
     saved_customer_drinks = get_instance_variables(saved_customers, "favourite_drink")
     saved_customer_drinks_names = get_instance_variables(saved_customer_drinks, "name")
-
-    print_menu = i_menu({"CUSTOMER": ["DONE"] + saved_customer_names, "DRINK": [""] + saved_customer_drinks_names}, "ADD DRINK", True)
-
-    for line in print_menu:
-        print(line)
-
-    chosen_index = get_valid_index(len(saved_customer_names) + 1)
+    chosen_index = print_table_get_index({"CUSTOMER": ["DONE"] + saved_customer_names, "DRINK": [""] + saved_customer_drinks_names}, "ADD DRINK", True)
 
     if chosen_index != 0:
         order.add_drink(saved_customers[chosen_index - 1], saved_customer_drinks[chosen_index - 1])
@@ -288,12 +251,7 @@ def order_add_from_favourites(order):
 
 
 def order_confirm(order):
-    confirm_table = i_menu({"": ["No", "Yes"]}, "CONFIRM ORDER?")
-
-    for line in confirm_table:
-        print(line)
-
-    chosen_index = get_valid_index(2)
+    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CONFIRM ORDER?")
 
     if chosen_index == 0:
         return True
@@ -330,12 +288,7 @@ def main_menu_loop(menu_data):
         print()
 
     #PRINTS MAIN MENU, GETS USER CHOICE AND RUNS FUNCTION
-    menu_to_print = i_menu({"": options_to_print}, "WELCOME TO TONIC!")
-    
-    for line in menu_to_print:
-        print(line)
-
-    chosen_index = get_valid_index(len(options_to_print))
+    chosen_index = print_table_get_index({"": options_to_print}, "WELCOME TO TONIC!")
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.menu_options[chosen_option]
 
