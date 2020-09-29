@@ -125,6 +125,97 @@ def remove_drink():
     available_drinks.remove(drink_to_remove)
     save()
 
+
+def search():
+    search_query = input("Search for a name or drink. (Type 'cancel' to return to the Main Menu.)\n>>> ").lower()
+    print()
+
+    if search_query == "" or search_query == "cancel":
+        return
+
+    customer_names = get_instance_variables(customers, "name")
+    drink_names = get_instance_variables(available_drinks, "name")
+    search_results = {}
+    exact_results = {}
+
+    for customer in customer_names:
+        customer = customer.lower()
+
+        if search_query in customer:
+            if customer == search_query:
+                exact_results[customer.title()] = "customer"
+            else:
+                search_results[customer.title()] = "customer"
+        
+    for drink in drink_names:
+        drink = drink.lower()
+        
+        if search_query in drink:
+            if drink == search_query:
+                exact_results[drink] = "drink"
+            else:
+                search_results[drink] = "drink"
+    
+    if len(search_results) + len(exact_results) == 0:
+        print("No matches found.")
+        _search_again()
+        return
+
+    name_column = []
+    type_column = []
+    
+    for result, category in exact_results.items():
+        name_column.append(result)
+        type_column.append(category)
+    
+    non_exact_names = sorted(search_results.keys())
+    
+    for name in non_exact_names:
+        name_column.append(name)
+
+        if name in customer_names:
+            type_column.append("customer")
+        else:
+            type_column.append("drink")
+
+    print_menu = i_menu({"RESULT": name_column, "DATA TYPE": type_column}, "SEARCH RESULTS", True)
+
+    for line in print_menu:
+        print(line)
+
+    _search_again()
+
+
+def _search_again():
+    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "SEARCH AGAIN?")
+
+    if chosen_index == 1:
+        search()
+
+
+def view_order_history():
+    times = get_instance_variables(order_history, "time_placed")
+    runners = get_instance_variables(order_history, "runner")
+    customer_lists = get_instance_variables(order_history, "customers")
+    customer_counts = []
+
+    for list_ in customer_lists:
+        print(list_)
+        customer_counts.append(f"{len(list_)} drinks")
+
+    chosen_index = print_table_get_index({"DATE": ["BACK"] + times, "RUNNER": [""] + runners, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
+
+    if chosen_index == 0:
+        return None
+
+    chosen_order = order_history[chosen_index - 1]
+    return view_previous_order(chosen_order)
+
+
+def view_previous_order(order):
+    pass
+
+
 #TODO: Make this save temporarily if you go back to the main menu during an order
 def order_menu_loop(menu_data, new_order):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
@@ -256,7 +347,9 @@ def order_confirm(order):
     if chosen_index == 0:
         return True
     else:
+        order.set_placement_time()
         order_history.append(order)
+        #save()
         return False
 
 

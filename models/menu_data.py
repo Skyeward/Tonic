@@ -13,7 +13,8 @@ class MenuData():
         self.menu_options["View Drinks"] = "view_drinks"
         self.menu_options["Add Drink"] = "add_drink"
         self.menu_options["Remove Drink"] = "remove_drink"
-        # return_list.append([search, "Search"])
+        self.menu_options["Search"] = "search"
+        self.menu_options["View Order History"] = "view_order_history"
         # return_list.append([view_order_history, "View Order History"])
         self.menu_options["Place An Order"] = "order_menu_loop"
         # return_list.append([ask_order_from_template, "Place An Order"])

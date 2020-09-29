@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
@@ -58,13 +59,29 @@ def _get_instance_vars(instance):
     dict_vars = (list(vars(instance).values()))
 
     for i, var in enumerate(dict_vars):
+        #is_iterable = isinstance(var, Iterable)
         is_any_instance = hasattr(var, '__dict__') or hasattr(var, '__slots__')
-        
-        if is_any_instance == True:
+
+        #if is_iterable == True:
+            #var = _find_instances_in_iterable(var)
+        if is_any_instance == True: #should be elif when above check is uncommented
             dict_vars[i] = _get_instance_vars(var)
 
     return_dict = {(class_flag + type(instance).__name__): dict_vars}
     return return_dict
+
+
+def _find_instances_in_iterable(iterable):
+    for i, item in enumerate(iterable):
+        is_iterable = isinstance(item, Iterable)
+        is_any_instance = hasattr(item, '__dict__') or hasattr(item, '__slots__')
+
+        if is_iterable == True:
+            item = _find_instances_in_iterable(item)
+        elif is_any_instance == True:
+            iterable[i] = _get_instance_vars(item)
+
+        return iterable
 
 
 def _make_instance_from_vars(dict_):
