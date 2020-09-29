@@ -7,6 +7,8 @@ from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
 from models.menu_data import MenuData as MenuData
+import pymysql as sql
+
 
 customers = []
 available_drinks = []
@@ -14,6 +16,22 @@ order_history = []
 
 save_data_path = "./data/tonic_data.json"
 save_synced = True
+
+
+def connect_database():
+    connection = sql.connect(host = "localhost", port = 33066, user = "root", passwd = "password", db = "TonicDB")
+    cursor = connection.cursor()
+    cursor.execute("SELECT drinkID FROM Drinks")
+    connection.commit()
+    rows = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    
+    for row in rows:
+        print(row)
+
+    print("rows")
+    return
 
 
 def load():
@@ -29,7 +47,7 @@ def load():
         global_data_lists[type_as_string].append(instance)
 
 
-def save(): #(instances, new_data_name, new_data_name = "")
+def save():
     is_success = _json_save(save_data_path, customers + available_drinks + order_history)
     global save_synced
 
@@ -440,6 +458,7 @@ def main_menu_loop(menu_data):
 
 if __name__ == "__main__":
     load()
+    connect_database()
     menu_data = MenuData()
     print(intro())
     main_menu_loop(menu_data)
