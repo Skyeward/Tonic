@@ -193,7 +193,7 @@ def _search_again():
         search()
 
 
-def view_order_history():
+def view_order_history(is_selecting_order = False):
     times = get_instance_variables(order_history, "time_placed")
     runners = get_instance_variables(order_history, "runner")
     runner_names = get_instance_variables(runners, "name")
@@ -210,25 +210,51 @@ def view_order_history():
         return None
 
     chosen_order = order_history[chosen_index - 1]
-    return view_previous_order(chosen_order)
+    return view_previous_order(chosen_order, is_selecting_order)
 
 
-def view_previous_order(order):
-    #order_customers = get_instance_variables(order, "customers")
+def view_previous_order(order, is_selecting_order):
     customer_names = get_instance_variables(order.customers, "name")
     customer_drinks = get_instance_variables(order.customers, "favourite_drink")
     drink_names = get_instance_variables(customer_drinks, "name")
-    
+
+    if is_selecting_order == True:
+        customer_names.insert(0, "BACK")
+        drink_names.insert(0, "")
+
     print_table = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, f"ORDER PLACED {order.time_placed}", True)
 
     for line in print_table:
         print(line)
     
-    return None
+    if is_selecting_order == False:
+        return None
+
+    chosen_index = get_valid_index(len(customer_names))
+    return chosen_index
+    
+
+def question_user_before_order(menu_data):
+    if len(order_history) == 0:
+        order_menu_loop(menu_data)
+        return
+    
+    yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF PREVIOUS ORDER?")
+
+    if yes_or_no == 0:
+        order_menu_loop(menu_data)
+        return
+    else:
+        chosen_order = view_order_history(True)
+
+    if chosen_order == 0:
+        question_user_before_order()
+    else:
+        order = order_history(chosen_order - 1).copy()
+        order_menu_loop(menu_data, order)
 
 
-#TODO: Make this save temporarily if you go back to the main menu during an order
-def order_menu_loop(menu_data, new_order):
+def order_menu_loop(menu_data, new_order = None):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
     if new_order == None:
@@ -402,8 +428,8 @@ def main_menu_loop(menu_data):
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.menu_options[chosen_option]
 
-    if chosen_function == "order_menu_loop":
-        order_menu_loop(menu_data, None)
+    if chosen_function == "question_user_before_order":
+        question_user_before_order(menu_data)
     else:
         eval(chosen_function)()
 

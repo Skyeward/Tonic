@@ -15,10 +15,7 @@ class MenuData():
         self.menu_options["Remove Drink"] = "remove_drink"
         self.menu_options["Search"] = "search"
         self.menu_options["View Order History"] = "view_order_history"
-        # return_list.append([view_order_history, "View Order History"])
-        self.menu_options["Place An Order"] = "order_menu_loop"
-        # return_list.append([ask_order_from_template, "Place An Order"])
-        # return_list.append([trains, "I Like Trains"])
+        self.menu_options["Place An Order"] = "question_user_before_order"
         self.menu_options["Force Save Data"] = "save"
         self.menu_options["Exit App"] = "exit_app"
 
