@@ -196,6 +196,7 @@ def _search_again():
 def view_order_history():
     times = get_instance_variables(order_history, "time_placed")
     runners = get_instance_variables(order_history, "runner")
+    runner_names = get_instance_variables(runners, "name")
     customer_lists = get_instance_variables(order_history, "customers")
     customer_counts = []
 
@@ -203,7 +204,7 @@ def view_order_history():
         print(list_)
         customer_counts.append(f"{len(list_)} drinks")
 
-    chosen_index = print_table_get_index({"DATE": ["BACK"] + times, "RUNNER": [""] + runners, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
+    chosen_index = print_table_get_index({"DATE": ["BACK"] + times, "RUNNER": [""] + runner_names, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
 
     if chosen_index == 0:
         return None
@@ -213,7 +214,17 @@ def view_order_history():
 
 
 def view_previous_order(order):
-    pass
+    #order_customers = get_instance_variables(order, "customers")
+    customer_names = get_instance_variables(order.customers, "name")
+    customer_drinks = get_instance_variables(order.customers, "favourite_drink")
+    drink_names = get_instance_variables(customer_drinks, "name")
+    
+    print_table = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, f"ORDER PLACED {order.time_placed}", True)
+
+    for line in print_table:
+        print(line)
+    
+    return None
 
 
 #TODO: Make this save temporarily if you go back to the main menu during an order
@@ -371,12 +382,18 @@ def main_menu_loop(menu_data):
     if len(customers) == 0:
         options_to_print.remove("Remove Customer")
         options_to_print.remove("View Customers")
+        options_to_print.remove("Place An Order")
+
+    if len(order_history) == 0:
+        options_to_print.remove("View Order History")
 
     if len(available_drinks) == 0:
+        if "Place An Order" in options_to_print:
+            options_to_print.remove("Place An Order")
+
         options_to_print.remove("Add Customer")
         options_to_print.remove("Remove Drink")
         options_to_print.remove("View Drinks")
-        options_to_print.remove("Place An Order")
         print("Your list of available drinks is currently empty. I recommend starting with the Add Drink option!")
         print()
 
