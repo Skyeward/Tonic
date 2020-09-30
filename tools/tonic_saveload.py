@@ -5,9 +5,28 @@ from models.drink import Drink as Drink
 from os import path as path
 from typing import Iterable
 import json
+import pymysql as sql
 
 
 class_flag = "  "
+
+
+def sql_add_drink(drink_to_add = None):
+    connection = sql.connect(host = "localhost", port = 33066, user = "root", passwd = "password", db = "TonicDB")
+    cursor = connection.cursor()
+    cursor.execute('SELECT drinkID FROM Drinks WHERE drinkName = "tea"')
+    #cursor.execute('SELECT drinkID FROM Drinks WHERE drinkName = "sea"')
+    connection.commit()
+    rows = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    print(rows)
+    print("rows")
+
+
+def sql_load():
+    pass
 
 
 def json_save(save_path: str, instances: Iterable[type]) -> str:
