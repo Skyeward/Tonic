@@ -11,7 +11,7 @@ def intro():
 
     welcome_message = f"Welcome to Tonic, the drink order management app!"
 
-    rand_int = randrange(0, 20)
+    rand_int = randrange(0, 5)
 
     if rand_int == 0:
         ascii_title = ascii_title.replace('#', 'O').replace('+', 'o')

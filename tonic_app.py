@@ -21,6 +21,9 @@ save_synced = True
 
 
 def load():
+    return sql_load()
+    
+    #NOT CURRENTLY RUNNING
     loaded_instances = json_load(save_data_path)
 
     if loaded_instances == None:
@@ -31,6 +34,13 @@ def load():
     for instance in loaded_instances:
         type_as_string = type(instance).__name__
         global_data_lists[type_as_string].append(instance)
+
+
+def sql_load():
+    customers = db(sql.get_all_customers)
+    drinks = db(sql.get_all_drinks)
+
+    return (drinks, customers)
 
 
 def save():
@@ -46,7 +56,7 @@ def save():
         save_synced = False
 
 
-def view_customers():
+def view_customers(**kwargs):
     customer_names = get_instance_variables(customers, "name")
     customer_drinks = get_instance_variables(customers, "favourite_drink")
     drink_names = get_instance_variables(customer_drinks, "name")
@@ -57,15 +67,15 @@ def view_customers():
         print(line)
 
 
-def add_customer():
-    new_customer = new_customer_instance(customers)
+def add_customer(**kwargs):
+    new_customer = _new_customer_instance(customers)
 
     if new_customer != None:
         customers.append(new_customer)
         save()
 
 
-def new_customer_instance(customers_to_check_against):
+def _new_customer_instance(customers_to_check_against):
     new_customer = Customer()
     new_name = new_customer.choose_name(customers_to_check_against)
 
@@ -81,7 +91,7 @@ def new_customer_instance(customers_to_check_against):
     return new_customer
 
 
-def remove_customer():
+def remove_customer(**kwargs):
     customer_names = ["BACK"]
     customer_drinks = [""]
     customer_names += get_instance_variables(customers, "name")
@@ -97,7 +107,7 @@ def remove_customer():
     save()
 
 
-def view_drinks():
+def view_drinks(**kwargs):
     drink_names = get_instance_variables(available_drinks, "name")
 
     print_menu = i_menu({"": drink_names}, "DRINKS")
@@ -106,7 +116,7 @@ def view_drinks():
         print(line)
 
 
-def add_drink():
+def add_drink(**kwargs):
     new_drink = Drink()
     new_name = new_drink.choose_name(available_drinks)
 
@@ -118,7 +128,7 @@ def add_drink():
     return new_drink #required for testing
 
 
-def remove_drink():
+def remove_drink(**kwargs):
     drinks = get_instance_variables(available_drinks, "name")
     chosen_index = print_table_get_index({"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
 
@@ -130,7 +140,7 @@ def remove_drink():
     save()
 
 
-def search():
+def search(**kwargs):
     search_query = input("Search for a name or drink. (Type 'cancel' to return to the Main Menu.)\n>>> ").lower()
     print()
 
@@ -187,14 +197,14 @@ def search():
     for line in print_menu:
         print(line)
 
-    _search_again()
+    _search_again(**kwargs)
 
 
-def _search_again():
+def _search_again(**kwargs):
     chosen_index = print_table_get_index({"": ["No", "Yes"]}, "SEARCH AGAIN?")
 
     if chosen_index == 1:
-        search()
+        search(**kwargs)
 
 
 def view_order_history(is_selecting_order = False):
@@ -238,27 +248,27 @@ def view_previous_order(order, is_selecting_order):
     return chosen_index
     
 
-def question_user_before_order(menu_data):
+def question_user_before_order(menu_data, orders):
     if len(order_history) == 0:
-        order_menu_loop(menu_data)
+        order_menu_loop(menu_data, orders)
         return
     
     yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF PREVIOUS ORDER?")
 
     if yes_or_no == 0:
-        order_menu_loop(menu_data)
+        order_menu_loop(menu_data, orders)
         return
     else:
         chosen_order = view_order_history(True)
 
     if chosen_order == 0:
-        question_user_before_order()
+        question_user_before_order(menu_data, orders)
     else:
-        order = order_history(chosen_order - 1).copy()
+        order = order_history[chosen_order - 1].copy()
         order_menu_loop(menu_data, order)
 
 
-def order_menu_loop(menu_data, new_order = None):
+def order_menu_loop(menu_data, orders, new_order = None):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
     if new_order == None:
@@ -297,7 +307,7 @@ def order_menu_loop(menu_data, new_order = None):
 
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
-        order_menu_loop(menu_data, new_order)
+        order_menu_loop(menu_data, orders, new_order)
 
 
 def order_cancel(order): #order not required for this function, but is passed to all order functions
@@ -336,7 +346,7 @@ def order_choose_runner(order, change_string = "CHOOSE"):
 
 
 def order_new_customer(order):
-    new_customer = new_customer_instance(order.customers)
+    new_customer = _new_customer_instance(order.customers)
 
     if new_customer == None:
         print("Cancelling...\n")
@@ -398,7 +408,7 @@ def exit_app():
     print("Exiting App...")
     
 
-def main_menu_loop(menu_data):
+def main_menu_loop(menu_data, customers, drinks, orders):
     "Menu which serves as the root of the app, and is recursively run until app is exited."
 
     print()
@@ -433,20 +443,18 @@ def main_menu_loop(menu_data):
     chosen_function = menu_data.menu_options[chosen_option]
 
     if chosen_function == "question_user_before_order":
-        question_user_before_order(menu_data)
+        question_user_before_order(menu_data, orders)
     else:
-        eval(chosen_function)()
+        eval(chosen_function)(customers, drinks, orders)
 
     #LOOPS MENU UNLESS exit_app() WAS RUN
     if menu_data.menu_options[chosen_option] != "exit_app":
-        main_menu_loop(menu_data)
+        main_menu_loop(menu_data, customers, drinks, orders)
 
 
-if __name__ == "__main__":
-    load()
-    #db(sql.test)
-    #db(sql.add_drink, "tea")
-    #db(sql.add_drink, "pea")
+if __name__ == "__main__":  
+    customers, drinks = load()
+    orders = [] #NEEDS CHANGING
     menu_data = MenuData()
     print(intro())
-    main_menu_loop(menu_data)
+    main_menu_loop(menu_data, customers, drinks, orders)
