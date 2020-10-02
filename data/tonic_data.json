@@ -1,1 +1,1 @@
-[{"  Customer": ["Bob", {"  Drink": ["tea"]}]}, {"  Drink": ["tea"]}]
+[{"  Customer": ["Bob", ["Simon", "coffee"]]}, {"  Customer": ["Simon", ["Simon", "coffee"]]}]

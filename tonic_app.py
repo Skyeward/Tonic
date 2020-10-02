@@ -40,7 +40,7 @@ def sql_load():
     customers = db(sql.get_all_customers)
     drinks = db(sql.get_all_drinks)
 
-    return (drinks, customers)
+    return (customers, drinks)
 
 
 def save():
@@ -108,8 +108,7 @@ def remove_customer(**kwargs):
 
 
 def view_drinks(**kwargs):
-    drink_names = get_instance_variables(available_drinks, "name")
-
+    drink_names = get_instance_variables(kwargs["drinks"], "name")
     print_menu = i_menu({"": drink_names}, "DRINKS")
 
     for line in print_menu:
@@ -118,26 +117,26 @@ def view_drinks(**kwargs):
 
 def add_drink(**kwargs):
     new_drink = Drink()
-    new_name = new_drink.choose_name(available_drinks)
+    new_name = new_drink.choose_name(kwargs["drinks"])
 
     if new_name == None:
         return None
-    
+
+    db(sql.add_drink, new_drink)
     available_drinks.append(new_drink)
-    save()
     return new_drink #required for testing
 
 
 def remove_drink(**kwargs):
-    drinks = get_instance_variables(available_drinks, "name")
+    drinks = get_instance_variables(kwargs["drinks"], "name")
     chosen_index = print_table_get_index({"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
 
     if chosen_index == 0:
         return
 
-    drink_to_remove = available_drinks[chosen_index - 1]
-    available_drinks.remove(drink_to_remove)
-    save()
+    drink_to_remove = kwargs["drinks"][chosen_index - 1]
+    db(sql.remove_drink, drink_to_remove)
+    kwargs["drinks"].remove(drink_to_remove)
 
 
 def search(**kwargs):
@@ -404,7 +403,7 @@ def order_confirm(order):
         return False
 
 
-def exit_app():
+def exit_app(**kwargs):
     print("Exiting App...")
     
 
@@ -427,7 +426,7 @@ def main_menu_loop(menu_data, customers, drinks, orders):
     if len(order_history) == 0:
         options_to_print.remove("View Order History")
 
-    if len(available_drinks) == 0:
+    if len(drinks) == 0:
         if "Place An Order" in options_to_print:
             options_to_print.remove("Place An Order")
 
@@ -445,7 +444,7 @@ def main_menu_loop(menu_data, customers, drinks, orders):
     if chosen_function == "question_user_before_order":
         question_user_before_order(menu_data, orders)
     else:
-        eval(chosen_function)(customers, drinks, orders)
+        eval(chosen_function)(customers = customers, drinks = drinks, orders = orders)
 
     #LOOPS MENU UNLESS exit_app() WAS RUN
     if menu_data.menu_options[chosen_option] != "exit_app":
