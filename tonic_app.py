@@ -146,8 +146,8 @@ def search(**kwargs):
     if search_query == "" or search_query == "cancel":
         return
 
-    customer_names = get_instance_variables(customers, "name")
-    drink_names = get_instance_variables(available_drinks, "name")
+    customer_names = get_instance_variables(kwargs["customers"], "name")
+    drink_names = get_instance_variables(kwargs["drinks"], "name")
     search_results = {}
     exact_results = {}
 
