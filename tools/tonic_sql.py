@@ -27,7 +27,7 @@ def get_all_customers(cursor):
     for result in results:
         new_customer = Customer()
         new_customer.name = result[0]
-        favourite = results[1]
+        favourite = result[1]
 
         new_customer.favourite_drink = favourite
         customer_list.append(new_customer)
@@ -53,13 +53,9 @@ def add_drink(cursor, drink):
     cursor.execute(f'SELECT drinkAvailable FROM Drinks WHERE drinkName = "{drink.name}"')
     result = cursor.fetchall()
 
-    print(result)
-
     if len(result) == 0:
-        print("drink doesn't exist")
         drink_exists = False
     else:
-        print("drink exists")
         drink_exists = True
 
     if drink_exists:
@@ -69,5 +65,25 @@ def add_drink(cursor, drink):
 
 
 def remove_drink(cursor, drink):
-    print(drink.name)
     cursor.execute(f"UPDATE Drinks SET drinkAvailable = 0 WHERE drinkName = '{drink.name}'")
+
+
+def add_customer(cursor, customer):
+    cursor.execute(f'SELECT active FROM Customers WHERE customerName = "{customer.name}"')
+    result = cursor.fetchall()
+
+    if len(result) == 0:
+        #print("drink doesn't exist")
+        customer_exists = False
+    else:
+        #print("drink exists")
+        customer_exists = True
+
+    if customer_exists:
+        cursor.execute(f"UPDATE Customers SET favouriteDrink = '{customer.favourite_drink}', active = 1 WHERE customerName = '{customer.name}'")
+    else:
+        cursor.execute(f"INSERT INTO Customers (customerName, favouriteDrink, active) VALUES ('{customer.name}', '{customer.favourite_drink}', 1)")
+
+
+def remove_customer(cursor, customer):
+    cursor.execute(f"UPDATE Customers SET active = 0 WHERE customerName = '{customer.name}'")

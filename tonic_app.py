@@ -21,22 +21,6 @@ save_synced = True
 
 
 def load():
-    return sql_load()
-    
-    #NOT CURRENTLY RUNNING
-    loaded_instances = json_load(save_data_path)
-
-    if loaded_instances == None:
-        return
-
-    global_data_lists = {"Customer": customers, "Drink": available_drinks, "DrinkOrder": order_history}
-
-    for instance in loaded_instances:
-        type_as_string = type(instance).__name__
-        global_data_lists[type_as_string].append(instance)
-
-
-def sql_load():
     customers = db(sql.get_all_customers)
     drinks = db(sql.get_all_drinks)
 
@@ -56,10 +40,9 @@ def save():
         save_synced = False
 
 
-def view_customers(**kwargs):
-    customer_names = get_instance_variables(customers, "name")
-    customer_drinks = get_instance_variables(customers, "favourite_drink")
-    drink_names = get_instance_variables(customer_drinks, "name")
+def view_customers(**kwargs): 
+    customer_names = get_instance_variables(kwargs["customers"], "name")
+    drink_names = get_instance_variables(kwargs["customers"], "favourite_drink")
     
     print_menu = i_menu({"NAME": customer_names, "FAVOURITE DRINK": drink_names}, "CUSTOMERS", True)
 
@@ -68,22 +51,25 @@ def view_customers(**kwargs):
 
 
 def add_customer(**kwargs):
-    new_customer = _new_customer_instance(customers)
+    new_customer = _new_customer_instance(**kwargs)
 
-    if new_customer != None:
-        customers.append(new_customer)
-        save()
+    if new_customer == None:
+        return
+
+    db(sql.add_customer, new_customer)
+    kwargs["customers"].append(new_customer)
+    save()
 
 
-def _new_customer_instance(customers_to_check_against):
+def _new_customer_instance(**kwargs):
     new_customer = Customer()
-    new_name = new_customer.choose_name(customers_to_check_against)
+    new_name = new_customer.choose_name(kwargs["customers"])
 
     if new_name == None:
         return None
 
     print()
-    new_drink = new_customer.choose_drink(available_drinks)
+    new_drink = new_customer.choose_drink(kwargs["drinks"])
 
     if new_drink == None:
         return None
@@ -94,17 +80,17 @@ def _new_customer_instance(customers_to_check_against):
 def remove_customer(**kwargs):
     customer_names = ["BACK"]
     customer_drinks = [""]
-    customer_names += get_instance_variables(customers, "name")
-    customer_drinks += get_instance_variables(get_instance_variables(customers, "favourite_drink"), "name")
+    customer_names += get_instance_variables(kwargs["customers"], "name")
+    customer_drinks += get_instance_variables(kwargs["customers"], "favourite_drink")
 
     chosen_index = print_table_get_index({"CUSTOMER": customer_names, "DRINK": customer_drinks}, "CHOOSE CUSTOMER TO REMOVE", True)
 
     if chosen_index == 0:
         return
     
-    customer_to_remove = customers[chosen_index - 1]
+    customer_to_remove = kwargs["customers"][chosen_index - 1]
+    db(sql.remove_customer, customer_to_remove)
     customers.remove(customer_to_remove)
-    save()
 
 
 def view_drinks(**kwargs):
@@ -123,7 +109,7 @@ def add_drink(**kwargs):
         return None
 
     db(sql.add_drink, new_drink)
-    available_drinks.append(new_drink)
+    kwargs["drinks"].append(new_drink)
     return new_drink #required for testing
 
 

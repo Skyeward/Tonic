@@ -40,5 +40,5 @@ class Customer():
         if chosen_index == 0:
             return None
 
-        self.favourite_drink = drinks[chosen_index - 1]
+        self.favourite_drink = drink_names[chosen_index - 1]
         return self.favourite_drink
