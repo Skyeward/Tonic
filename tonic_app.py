@@ -360,7 +360,7 @@ def order_remove_drink(order, **kwargs):
 #TODO: Disallow when empty
 def order_add_from_favourites(order, **kwargs):
     saved_customers = kwargs["customers"].copy()
-    saved_customer_names = get_instance_variables(customers, "name")
+    saved_customer_names = get_instance_variables(saved_customers, "name")
     order_customer_names = get_instance_variables(order.customers, "name")
 
     for i, name in enumerate(saved_customer_names):
@@ -368,17 +368,16 @@ def order_add_from_favourites(order, **kwargs):
             saved_customers.pop(i)
             saved_customer_names.pop(i)
     
-    saved_customer_drinks = get_instance_variables(saved_customers, "favourite_drink")
-    saved_customer_drinks_names = get_instance_variables(saved_customer_drinks, "name")
+    saved_customer_drinks_names = get_instance_variables(saved_customers, "favourite_drink")
     chosen_index = print_table_get_index({"CUSTOMER": ["DONE"] + saved_customer_names, "DRINK": [""] + saved_customer_drinks_names}, "ADD DRINK", True)
 
     if chosen_index != 0:
-        order.add_drink(saved_customers[chosen_index - 1], saved_customer_drinks[chosen_index - 1])
+        order.customers.append(saved_customers[chosen_index - 1])
 
     if chosen_index == 0 or len(saved_customer_names) == 1:
         return True
 
-    return order_add_from_favourites(order)
+    return order_add_from_favourites(order, **kwargs)
 
 
 def order_confirm(order, **kwargs):
