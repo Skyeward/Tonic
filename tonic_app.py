@@ -320,7 +320,7 @@ def order_view(order, **kwargs):
     return True
 
 
-def order_choose_runner(order, change_string = "CHOOSE", **kwargs):
+def order_choose_runner(order, **kwargs):
     names = get_instance_variables(kwargs["customers"], "name")
     chosen_index = print_table_get_index({"": ["CANCEL"] + names}, "CHOOSE RUNNER")
 
@@ -359,7 +359,7 @@ def order_remove_drink(order, **kwargs):
 
 #TODO: Disallow when empty
 def order_add_from_favourites(order, **kwargs):
-    saved_customers = customers.copy()
+    saved_customers = kwargs["customers"].copy()
     saved_customer_names = get_instance_variables(customers, "name")
     order_customer_names = get_instance_variables(order.customers, "name")
 
