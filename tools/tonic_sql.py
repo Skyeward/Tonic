@@ -87,3 +87,8 @@ def add_customer(cursor, customer):
 
 def remove_customer(cursor, customer):
     cursor.execute(f"UPDATE Customers SET active = 0 WHERE customerName = '{customer.name}'")
+
+
+# print("largest customerID:")
+# cursor.execute("SELECT MAX(customerID) FROM Customers")
+# print(cursor.fetchall()[0][0])

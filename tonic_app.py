@@ -233,27 +233,27 @@ def view_previous_order(order, is_selecting_order):
     return chosen_index
     
 
-def question_user_before_order(menu_data, orders):
-    if len(order_history) == 0:
-        order_menu_loop(menu_data, orders)
+def question_user_before_order(menu_data, customers, drinks, orders):
+    if len(orders) == 0:
+        order_menu_loop(menu_data, customers, drinks, orders)
         return
     
     yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF PREVIOUS ORDER?")
 
     if yes_or_no == 0:
-        order_menu_loop(menu_data, orders)
+        order_menu_loop(menu_data, customers, drinks, orders)
         return
     else:
         chosen_order = view_order_history(True)
 
     if chosen_order == 0:
-        question_user_before_order(menu_data, orders)
+        question_user_before_order(menu_data, customers, drinks, orders)
     else:
-        order = order_history[chosen_order - 1].copy()
-        order_menu_loop(menu_data, order)
+        order = orders[chosen_order - 1].copy()
+        order_menu_loop(menu_data, customers, drinks, orders, order)
 
 
-def order_menu_loop(menu_data, orders, new_order = None):
+def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
     if new_order == None:
@@ -288,14 +288,14 @@ def order_menu_loop(menu_data, orders, new_order = None):
     chosen_index = print_table_get_index({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.order_menu_options[chosen_option]
-    is_loop = eval(chosen_function)(new_order)
+    is_loop = eval(chosen_function)(new_order, customers = customers, drinks = drinks, orders = orders)
 
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
-        order_menu_loop(menu_data, orders, new_order)
+        order_menu_loop(menu_data, customers, drinks, orders, new_order)
 
 
-def order_cancel(order): #order not required for this function, but is passed to all order functions
+def order_cancel(order, **kwargs): #order not required for this function, but is passed to all order functions
     chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CANCEL ORDER?")
 
     if chosen_index == 0:
@@ -304,9 +304,12 @@ def order_cancel(order): #order not required for this function, but is passed to
         return False
 
 
-def order_view(order):
+def order_view(order, **kwargs):
     customer_names = get_instance_variables(order.customers, "name")
-    drink_names = get_instance_variables(order.drinks, "name")
+    drink_names = get_instance_variables(order.customers, "favourite_drink")
+
+    # customer_names = order.customers
+    # drink_names = order.drinks
 
     print_menu = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, "CURRENT ORDER", True)
     
@@ -317,8 +320,8 @@ def order_view(order):
     return True
 
 
-def order_choose_runner(order, change_string = "CHOOSE"):
-    names = get_instance_variables(customers, "name")
+def order_choose_runner(order, change_string = "CHOOSE", **kwargs):
+    names = get_instance_variables(kwargs["customers"], "name")
     chosen_index = print_table_get_index({"": ["CANCEL"] + names}, "CHOOSE RUNNER")
 
     if chosen_index == 0:
@@ -330,18 +333,18 @@ def order_choose_runner(order, change_string = "CHOOSE"):
     return True
 
 
-def order_new_customer(order):
-    new_customer = _new_customer_instance(order.customers)
+def order_new_customer(order, **kwargs):
+    new_customer = _new_customer_instance(customers = order.customers, drinks = kwargs["drinks"])
 
     if new_customer == None:
         print("Cancelling...\n")
         return True
     
-    order.add_drink(new_customer, new_customer.favourite_drink)
+    order.customers.append(new_customer)
     return True
 
 
-def order_remove_drink(order):
+def order_remove_drink(order, **kwargs):
     order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
     order_drinks = [""] + get_instance_variables(order.drinks, "name")
     chosen_index = print_table_get_index({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
@@ -352,9 +355,10 @@ def order_remove_drink(order):
 
     order.remove_drink(order.customers[chosen_index - 1])
     return True
+    
 
 #TODO: Disallow when empty
-def order_add_from_favourites(order):
+def order_add_from_favourites(order, **kwargs):
     saved_customers = customers.copy()
     saved_customer_names = get_instance_variables(customers, "name")
     order_customer_names = get_instance_variables(order.customers, "name")
@@ -377,7 +381,7 @@ def order_add_from_favourites(order):
     return order_add_from_favourites(order)
 
 
-def order_confirm(order):
+def order_confirm(order, **kwargs):
     chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CONFIRM ORDER?")
 
     if chosen_index == 0:
@@ -428,7 +432,7 @@ def main_menu_loop(menu_data, customers, drinks, orders):
     chosen_function = menu_data.menu_options[chosen_option]
 
     if chosen_function == "question_user_before_order":
-        question_user_before_order(menu_data, orders)
+        question_user_before_order(menu_data, customers, drinks, orders)
     else:
         eval(chosen_function)(customers = customers, drinks = drinks, orders = orders)
 

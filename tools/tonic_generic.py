@@ -168,6 +168,9 @@ def format_string(string_to_format: str, make_lowercase: bool = True, remove_spe
     
     formatted_input = formatted_input.strip()
 
+    formatted_input = formatted_input.replace("'", "")
+    formatted_input = formatted_input.replace("--", " ")
+
     while formatted_input.find("  ") != -1: #removes any spacing larger than a single space
         formatted_input = formatted_input.replace("  ", " ")
 
