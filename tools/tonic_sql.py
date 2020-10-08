@@ -49,6 +49,36 @@ def get_all_drinks(cursor):
     return drink_list
 
 
+def get_all_orders(cursor):
+    cursor.execute(f"SELECT orderID, runner, timePlaced FROM Orders")
+    results = cursor.fetchall()
+
+    order_dict = {}
+
+    for order_data in results:
+        order = DrinkOrder()
+        runner = Customer()
+
+        runner.name = order_data[1]
+        order.runner = runner
+        order.time_placed = str(order_data[2])
+
+        order_dict[order_data[0]] = order
+
+    cursor.execute(f"SELECT orderID, customerName, drinkName FROM OrderRequests")
+    results = cursor.fetchall()
+
+    for customer_data in results:
+        customer = Customer()
+
+        customer.name = customer_data[1]
+        customer.favourite_drink = customer_data[2]
+
+        order_dict[customer_data[0]].customers.append(customer)
+
+    return list(order_dict.values())
+
+
 def add_drink(cursor, drink):
     cursor.execute(f'SELECT drinkAvailable FROM Drinks WHERE drinkName = "{drink.name}"')
     result = cursor.fetchall()
@@ -89,6 +119,10 @@ def remove_customer(cursor, customer):
     cursor.execute(f"UPDATE Customers SET active = 0 WHERE customerName = '{customer.name}'")
 
 
-# print("largest customerID:")
-# cursor.execute("SELECT MAX(customerID) FROM Customers")
-# print(cursor.fetchall()[0][0])
+def add_order(cursor, order):
+    cursor.execute(f"INSERT INTO Orders (runner) VALUES ('{order.runner.name}')")
+    cursor.execute("SELECT MAX(orderID) FROM Orders")
+    order_ID = cursor.fetchall()[0][0]
+
+    for customer in order.customers:
+        cursor.execute(f"INSERT INTO OrderRequests (orderID, customerName, drinkName) VALUES ({order_ID}, '{customer.name}', '{customer.favourite_drink}')")

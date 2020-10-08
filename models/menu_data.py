@@ -18,7 +18,6 @@ class MenuData():
         self.menu_options["Search"] = "search"
         self.menu_options["View Order History"] = "view_order_history"
         self.menu_options["Place An Order"] = "question_user_before_order"
-        self.menu_options["Force Save Data"] = "save"
         self.menu_options["Exit App"] = "exit_app"
 
 
@@ -29,7 +28,9 @@ class MenuData():
         self.order_menu_options["Change Runner"] = "order_choose_runner"
         self.order_menu_options["Add Guest"] = "order_new_customer"
         self.order_menu_options["Add Drinks From Favourites"] = "order_add_from_favourites"
+        self.order_menu_options["Edit Customer's Drink"] = "order_edit_drink"
         self.order_menu_options["Remove Drink Selection"] = "order_remove_drink"
+        self.order_menu_options["Suggest A Drink"] = "order_random_suggestion"
         self.order_menu_options["Confirm Order"] = "order_confirm"
 
 

@@ -1,8 +1,8 @@
+from random import randrange as randrange
 from tools.tonic_launch import intro as intro
 from tools.tonic_generic import indexed_menu as i_menu, format_string as fmat
 from tools.tonic_generic import get_valid_index, get_instance_variables
 from tools.tonic_generic import get_unique_string, print_table_get_index
-from tools.tonic_saveload import json_save as _json_save, json_load as json_load
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
@@ -11,33 +11,15 @@ import pymysql as sql
 import tools.tonic_sql as sql
 from tools.tonic_sql import sql_connect_wrapper as db
 
-
-customers = []
-available_drinks = []
-order_history = []
-
-save_data_path = "./data/tonic_data.json"
-save_synced = True
+from datetime import datetime
 
 
 def load():
     customers = db(sql.get_all_customers)
     drinks = db(sql.get_all_drinks)
+    orders = db(sql.get_all_orders)
 
-    return (customers, drinks)
-
-
-def save():
-    is_success = _json_save(save_data_path, customers + available_drinks + order_history)
-    global save_synced
-
-    if is_success == True:
-        print(f"Your data has been saved.")
-        save_synced = True
-    else:
-        print(f"There was a problem saving your data. New data will be lost when the app is closed.")
-        print("A Save Data option has been added to the main menu. Try saving your data again later.")
-        save_synced = False
+    return (customers, drinks, orders)
 
 
 def view_customers(**kwargs): 
@@ -58,7 +40,6 @@ def add_customer(**kwargs):
 
     db(sql.add_customer, new_customer)
     kwargs["customers"].append(new_customer)
-    save()
 
 
 def _new_customer_instance(**kwargs):
@@ -192,15 +173,14 @@ def _search_again(**kwargs):
         search(**kwargs)
 
 
-def view_order_history(is_selecting_order = False):
-    times = get_instance_variables(order_history, "time_placed")
-    runners = get_instance_variables(order_history, "runner")
+def view_order_history(is_selecting_order = False, **kwargs):
+    times = get_instance_variables(kwargs["orders"], "time_placed")
+    runners = get_instance_variables(kwargs["orders"], "runner")
     runner_names = get_instance_variables(runners, "name")
-    customer_lists = get_instance_variables(order_history, "customers")
+    customer_lists = get_instance_variables(kwargs["orders"], "customers")
     customer_counts = []
 
     for list_ in customer_lists:
-        print(list_)
         customer_counts.append(f"{len(list_)} drinks")
 
     chosen_index = print_table_get_index({"DATE": ["BACK"] + times, "RUNNER": [""] + runner_names, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
@@ -208,20 +188,26 @@ def view_order_history(is_selecting_order = False):
     if chosen_index == 0:
         return None
 
-    chosen_order = order_history[chosen_index - 1]
-    return view_previous_order(chosen_order, is_selecting_order)
+    chosen_order = kwargs["orders"][chosen_index - 1]
+    yes_or_no = view_previous_order(chosen_order, is_selecting_order)
+
+    if yes_or_no == None:
+        return None
+    elif yes_or_no == 0:
+        return view_order_history(is_selecting_order, **kwargs)
+    else:
+        return chosen_order
 
 
 def view_previous_order(order, is_selecting_order):
     customer_names = get_instance_variables(order.customers, "name")
     customer_drinks = get_instance_variables(order.customers, "favourite_drink")
-    drink_names = get_instance_variables(customer_drinks, "name")
 
     if is_selecting_order == True:
         customer_names.insert(0, "BACK")
-        drink_names.insert(0, "")
+        customer_drinks.insert(0, "")
 
-    print_table = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, f"ORDER PLACED {order.time_placed}", True)
+    print_table = i_menu({"CUSTOMER": customer_names, "DRINK": customer_drinks}, f"ORDER PLACED {order.time_placed}", True)
 
     for line in print_table:
         print(line)
@@ -229,8 +215,8 @@ def view_previous_order(order, is_selecting_order):
     if is_selecting_order == False:
         return None
 
-    chosen_index = get_valid_index(len(customer_names))
-    return chosen_index
+    yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF THIS ORDER?")
+    return yes_or_no
     
 
 def question_user_before_order(menu_data, customers, drinks, orders):
@@ -244,13 +230,12 @@ def question_user_before_order(menu_data, customers, drinks, orders):
         order_menu_loop(menu_data, customers, drinks, orders)
         return
     else:
-        chosen_order = view_order_history(True)
+        chosen_order = view_order_history(True, orders = orders)
 
-    if chosen_order == 0:
-        question_user_before_order(menu_data, customers, drinks, orders)
+    if chosen_order == None:
+        order_menu_loop(menu_data, customers, drinks, orders)
     else:
-        order = orders[chosen_order - 1].copy()
-        order_menu_loop(menu_data, customers, drinks, orders, order)
+        order_menu_loop(menu_data, customers, drinks, orders, chosen_order)
 
 
 def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
@@ -274,6 +259,7 @@ def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
 
     if len(new_order.customers) == 0:
         options_to_print.remove("Remove Drink Selection")
+        options_to_print.remove("Edit Customer's Drink")
         options_to_print.remove("View Order")
 
     if new_order.runner == None or len(new_order.customers) == 0:
@@ -288,7 +274,7 @@ def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
     chosen_index = print_table_get_index({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.order_menu_options[chosen_option]
-    is_loop = eval(chosen_function)(new_order, customers = customers, drinks = drinks, orders = orders)
+    is_loop = eval(chosen_function)(new_order, customers = customers, drinks = drinks, orders = orders, menu_data = menu_data)
 
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
@@ -307,9 +293,6 @@ def order_cancel(order, **kwargs): #order not required for this function, but is
 def order_view(order, **kwargs):
     customer_names = get_instance_variables(order.customers, "name")
     drink_names = get_instance_variables(order.customers, "favourite_drink")
-
-    # customer_names = order.customers
-    # drink_names = order.drinks
 
     print_menu = i_menu({"CUSTOMER": customer_names, "DRINK": drink_names}, "CURRENT ORDER", True)
     
@@ -345,9 +328,7 @@ def order_new_customer(order, **kwargs):
 
 
 def order_remove_drink(order, **kwargs):
-    order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
-    order_drinks = [""] + get_instance_variables(order.drinks, "name")
-    chosen_index = print_table_get_index({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
+    chosen_index = _get_order_drink_index(order)
 
     if chosen_index == 0:
         print("Cancelling...\n")
@@ -355,29 +336,78 @@ def order_remove_drink(order, **kwargs):
 
     order.remove_drink(order.customers[chosen_index - 1])
     return True
+
+
+def order_edit_drink(order, **kwargs):
+    chosen_customer_index = _get_order_drink_index(order)
+
+    if chosen_customer_index == 0:
+        print("Cancelling...\n")
+        return True
+
+    customer_name = order.customers[chosen_customer_index - 1].name
+    drink_names = get_instance_variables(kwargs["drinks"], "name")
+    chosen_drink_index = print_table_get_index({"": ["CANCEL"] + drink_names}, f"CHOOSE {customer_name.upper()}'S DRINK")
+
+    if chosen_drink_index == 0:
+        print("Cancelling...\n")
+        return True
+
+    drink_name = drink_names[chosen_drink_index - 1]
+    order.customers[chosen_customer_index - 1].favourite_drink = drink_name
+    
+    return True
+
+
+def _get_order_drink_index(order):
+    order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
+    order_drinks = [""] + get_instance_variables(order.customers, "favourite_drink")
+    return print_table_get_index({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
     
 
 #TODO: Disallow when empty
 def order_add_from_favourites(order, **kwargs):
-    saved_customers = kwargs["customers"].copy()
-    saved_customer_names = get_instance_variables(saved_customers, "name")
-    order_customer_names = get_instance_variables(order.customers, "name")
+    names_in_order = get_instance_variables(order.customers, "name")
+    available_customers = []
 
-    for i, name in enumerate(saved_customer_names):
-        if name in order_customer_names:
-            saved_customers.pop(i)
-            saved_customer_names.pop(i)
+    for customer in kwargs["customers"]:
+        if customer.name not in names_in_order:
+            available_customers.append(customer)
     
-    saved_customer_drinks_names = get_instance_variables(saved_customers, "favourite_drink")
-    chosen_index = print_table_get_index({"CUSTOMER": ["DONE"] + saved_customer_names, "DRINK": [""] + saved_customer_drinks_names}, "ADD DRINK", True)
+    available_customer_names = get_instance_variables(available_customers, "name")
+    available_drink_names = get_instance_variables(available_customers, "favourite_drink")
+    chosen_index = print_table_get_index({"CUSTOMER": ["DONE"] + available_customer_names, "DRINK": [""] + available_drink_names}, "ADD DRINK", True)
 
     if chosen_index != 0:
-        order.customers.append(saved_customers[chosen_index - 1])
+        order.customers.append(available_customers[chosen_index - 1])
 
-    if chosen_index == 0 or len(saved_customer_names) == 1:
+    if chosen_index == 0 or len(available_customers) == 1:
         return True
 
     return order_add_from_favourites(order, **kwargs)
+
+
+def order_random_suggestion(order, **kwargs):
+    messages = kwargs["menu_data"].random_drink_messages
+    message_count = len(messages)
+    random_message = messages[randrange(0, message_count)]
+
+    drinks = kwargs["drinks"]
+    drinks_count = len(drinks)
+    random_drink = drinks[randrange(0, drinks_count)].name
+
+    random_message = random_message.replace("#", random_drink)
+
+    if random_drink[0] in "aeiou":
+        drink_starts_with_vowel = True
+    else:
+        drink_starts_with_vowel = False
+
+    determiner = "a" + ("n" * int(drink_starts_with_vowel))
+    random_message = random_message.replace("@", f"{determiner} {random_drink}")
+
+    print(random_message)
+    return True
 
 
 def order_confirm(order, **kwargs):
@@ -386,9 +416,9 @@ def order_confirm(order, **kwargs):
     if chosen_index == 0:
         return True
     else:
-        order.set_placement_time()
-        order_history.append(order)
-        #save()
+        order.time_placed = str(datetime.utcnow()).split(".")[0]
+        kwargs["customers"].append(order)
+        db(sql.add_order, order)
         return False
 
 
@@ -403,16 +433,13 @@ def main_menu_loop(menu_data, customers, drinks, orders):
 
     #ADDS OPTION STRINGS TO options_to_print AND REMOVES SOME OPTIONS UNDER SPECIFIC CONDITIONS
     options_to_print = list(menu_data.menu_options.keys())
-
-    if save_synced == True:
-        options_to_print.remove("Force Save Data")
     
     if len(customers) == 0:
         options_to_print.remove("Remove Customer")
         options_to_print.remove("View Customers")
         options_to_print.remove("Place An Order")
 
-    if len(order_history) == 0:
+    if len(orders) == 0:
         options_to_print.remove("View Order History")
 
     if len(drinks) == 0:
@@ -441,8 +468,7 @@ def main_menu_loop(menu_data, customers, drinks, orders):
 
 
 if __name__ == "__main__":  
-    customers, drinks = load()
-    orders = [] #NEEDS CHANGING
+    customers, drinks, orders = load()
     menu_data = MenuData()
     print(intro())
     main_menu_loop(menu_data, customers, drinks, orders)
