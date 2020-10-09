@@ -1,6 +1,6 @@
 from random import randrange
 
-def intro():
+def intro(user):
     ascii_title = """:::::::::::   ::::::::    ::::    :::   :::    ::::::::  
     :+:      :+:    :+:   :+:+:   :+:   :+:   :+:    :+: 
     +:+      +:+    +:+   :+:+:+  +:+   +:+   +:+        
@@ -9,7 +9,7 @@ def intro():
     #+#      #+#    #+#   #+#   #+#+#   #+#   #+#    #+# 
     ###       ########    ###    ####   ###    ########"""
 
-    welcome_message = f"Welcome to Tonic, the drink order management app!"
+    welcome_message = f"Welcome to Tonic {user}!"
 
     rand_int = randrange(0, 5)
 

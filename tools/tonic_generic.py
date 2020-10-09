@@ -1,4 +1,5 @@
 from typing import Iterable
+from models.twitch_data import TwitchData as TwitchData
 
 #┌─┄┐├┤└┼┘╭╮╰╯┆│ ┬┴
 
@@ -194,9 +195,12 @@ def get_instance_variables(instances: [type], variable_name: str):
     return return_list
 
 
-def get_valid_index(number_of_options: int, fail_message: [str] = None, input_indicator: str = ">>> ") -> int:
+def get_valid_index(twitch_data, number_of_options: int, fail_message: [str] = None, input_indicator: str = ">>> ") -> int:
     "Continues to take user inputs until the user types an integer between zero (inclusive) and number_of_options (exclusive)."
     
+    return twitch_data.find_command("index", number_of_options)
+
+    #BEFORE TWITCH INTEGRATION
     if number_of_options < 1:
         raise ValueError("number of options must be an integer greater than zero")
     
@@ -247,8 +251,9 @@ def get_unique_string(unavailable_strings: [str], input_message: str, fail_messa
             input_is_unique = True
 
     return user_input
+    
 
-def print_table_get_index(columns: {str: Iterable[str]}, title: str = "", show_column_headers: bool = False) -> int:
+def print_table_get_index(twitch_data, columns: {str: Iterable[str]}, title: str = "", show_column_headers: bool = False) -> int:
     "Calls indexed_menu(), prints the resulting table, calls get_valid_index and returns the player's chosen index"
     
     print_table = indexed_menu(columns, title, show_column_headers)
@@ -259,6 +264,6 @@ def print_table_get_index(columns: {str: Iterable[str]}, title: str = "", show_c
 
     final_index_as_string = final_line.split()[1]
     final_index = int(final_index_as_string)
-    chosen_index = get_valid_index(final_index + 1)
+    chosen_index = get_valid_index(twitch_data, final_index + 1)
 
     return chosen_index

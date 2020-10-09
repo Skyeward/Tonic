@@ -1,17 +1,21 @@
 from random import randrange as randrange
+from datetime import datetime
+import pymysql as sql
+import time
+
 from tools.tonic_launch import intro as intro
+
 from tools.tonic_generic import indexed_menu as i_menu, format_string as fmat
-from tools.tonic_generic import get_valid_index, get_instance_variables
-from tools.tonic_generic import get_unique_string, print_table_get_index
+from tools.tonic_generic import get_instance_variables, get_unique_string, print_table_get_index
+
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
 from models.drink import Drink as Drink
 from models.menu_data import MenuData as MenuData
-import pymysql as sql
+from models.twitch_data import TwitchData as TwitchData
+
 import tools.tonic_sql as sql
 from tools.tonic_sql import sql_connect_wrapper as db
-
-from datetime import datetime
 
 
 def load():
@@ -64,7 +68,7 @@ def remove_customer(**kwargs):
     customer_names += get_instance_variables(kwargs["customers"], "name")
     customer_drinks += get_instance_variables(kwargs["customers"], "favourite_drink")
 
-    chosen_index = print_table_get_index({"CUSTOMER": customer_names, "DRINK": customer_drinks}, "CHOOSE CUSTOMER TO REMOVE", True)
+    chosen_index = print_table_get_index(twitch_data, {"CUSTOMER": customer_names, "DRINK": customer_drinks}, "CHOOSE CUSTOMER TO REMOVE", True)
 
     if chosen_index == 0:
         return
@@ -96,7 +100,7 @@ def add_drink(**kwargs):
 
 def remove_drink(**kwargs):
     drinks = get_instance_variables(kwargs["drinks"], "name")
-    chosen_index = print_table_get_index({"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
+    chosen_index = print_table_get_index(twitch_data, {"": ["BACK"] + drinks}, "CHOOSE DRINK TO REMOVE")
 
     if chosen_index == 0:
         return
@@ -167,7 +171,7 @@ def search(**kwargs):
 
 
 def _search_again(**kwargs):
-    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "SEARCH AGAIN?")
+    chosen_index = print_table_get_index(twitch_data, {"": ["No", "Yes"]}, "SEARCH AGAIN?")
 
     if chosen_index == 1:
         search(**kwargs)
@@ -183,7 +187,7 @@ def view_order_history(is_selecting_order = False, **kwargs):
     for list_ in customer_lists:
         customer_counts.append(f"{len(list_)} drinks")
 
-    chosen_index = print_table_get_index({"DATE": ["BACK"] + times, "RUNNER": [""] + runner_names, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
+    chosen_index = print_table_get_index(twitch_data, {"DATE": ["BACK"] + times, "RUNNER": [""] + runner_names, "ORDER SIZE": [""] + customer_counts}, "PREVIOUS ORDERS", True)
 
     if chosen_index == 0:
         return None
@@ -215,30 +219,30 @@ def view_previous_order(order, is_selecting_order):
     if is_selecting_order == False:
         return None
 
-    yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF THIS ORDER?")
+    yes_or_no = print_table_get_index(twitch_data, {"": ["No", "Yes"]}, "START WITH COPY OF THIS ORDER?")
     return yes_or_no
     
 
-def question_user_before_order(menu_data, customers, drinks, orders):
+def question_user_before_order(menu_data, twitch_data, customers, drinks, orders):
     if len(orders) == 0:
-        order_menu_loop(menu_data, customers, drinks, orders)
+        order_menu_loop(menu_data, twitch_data, customers, drinks, orders)
         return
     
-    yes_or_no = print_table_get_index({"": ["No", "Yes"]}, "START WITH COPY OF PREVIOUS ORDER?")
+    yes_or_no = print_table_get_index(twitch_data, {"": ["No", "Yes"]}, "START WITH COPY OF PREVIOUS ORDER?")
 
     if yes_or_no == 0:
-        order_menu_loop(menu_data, customers, drinks, orders)
+        order_menu_loop(menu_data, twitch_data, customers, drinks, orders)
         return
     else:
         chosen_order = view_order_history(True, orders = orders)
 
     if chosen_order == None:
-        order_menu_loop(menu_data, customers, drinks, orders)
+        order_menu_loop(menu_data, twitch_data, customers, drinks, orders)
     else:
-        order_menu_loop(menu_data, customers, drinks, orders, chosen_order)
+        order_menu_loop(menu_data, twitch_data, customers, drinks, orders, chosen_order)
 
 
-def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
+def order_menu_loop(menu_data, twitch_data, customers, drinks, orders, new_order = None):
     "Menu to make a new order, and is recursively run until order is cancelled or confirmed."
 
     if new_order == None:
@@ -271,18 +275,18 @@ def order_menu_loop(menu_data, customers, drinks, orders, new_order = None):
     else:
         subheader = f"{new_order.runner.name.upper()}'S DRINKS RUN"
     
-    chosen_index = print_table_get_index({subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
+    chosen_index = print_table_get_index(twitch_data, {subheader: options_to_print}, f"ORDER OPTIONS - {len(new_order.customers)} DRINKS ADDED", True)
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.order_menu_options[chosen_option]
-    is_loop = eval(chosen_function)(new_order, customers = customers, drinks = drinks, orders = orders, menu_data = menu_data)
+    is_loop = eval(chosen_function)(new_order, customers = customers, drinks = drinks, orders = orders, menu_data = menu_data, twitch_data = twitch_data)
 
     #LOOPS MENU UNLESS order_cancel() or order_confirm() WAS RUN (AND APPENDS order_history IN THE LATTER CASE)
     if is_loop == True:
-        order_menu_loop(menu_data, customers, drinks, orders, new_order)
+        order_menu_loop(menu_data, twitch_data, customers, drinks, orders, new_order)
 
 
 def order_cancel(order, **kwargs): #order not required for this function, but is passed to all order functions
-    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CANCEL ORDER?")
+    chosen_index = print_table_get_index(twitch_data, {"": ["No", "Yes"]}, "CANCEL ORDER?")
 
     if chosen_index == 0:
         return True
@@ -305,7 +309,7 @@ def order_view(order, **kwargs):
 
 def order_choose_runner(order, **kwargs):
     names = get_instance_variables(kwargs["customers"], "name")
-    chosen_index = print_table_get_index({"": ["CANCEL"] + names}, "CHOOSE RUNNER")
+    chosen_index = print_table_get_index(twitch_data, {"": ["CANCEL"] + names}, "CHOOSE RUNNER")
 
     if chosen_index == 0:
         print("Cancelling...\n")
@@ -347,7 +351,7 @@ def order_edit_drink(order, **kwargs):
 
     customer_name = order.customers[chosen_customer_index - 1].name
     drink_names = get_instance_variables(kwargs["drinks"], "name")
-    chosen_drink_index = print_table_get_index({"": ["CANCEL"] + drink_names}, f"CHOOSE {customer_name.upper()}'S DRINK")
+    chosen_drink_index = print_table_get_index(twitch_data, {"": ["CANCEL"] + drink_names}, f"CHOOSE {customer_name.upper()}'S DRINK")
 
     if chosen_drink_index == 0:
         print("Cancelling...\n")
@@ -362,7 +366,7 @@ def order_edit_drink(order, **kwargs):
 def _get_order_drink_index(order):
     order_customers = ["CANCEL"] + get_instance_variables(order.customers, "name")
     order_drinks = [""] + get_instance_variables(order.customers, "favourite_drink")
-    return print_table_get_index({"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
+    return print_table_get_index(twitch_data, {"CUSTOMERS": order_customers, "DRINKS": order_drinks}, "CHOOSE DRINK TO REMOVE", True)
     
 
 #TODO: Disallow when empty
@@ -376,7 +380,7 @@ def order_add_from_favourites(order, **kwargs):
     
     available_customer_names = get_instance_variables(available_customers, "name")
     available_drink_names = get_instance_variables(available_customers, "favourite_drink")
-    chosen_index = print_table_get_index({"CUSTOMER": ["DONE"] + available_customer_names, "DRINK": [""] + available_drink_names}, "ADD DRINK", True)
+    chosen_index = print_table_get_index(twitch_data, {"CUSTOMER": ["DONE"] + available_customer_names, "DRINK": [""] + available_drink_names}, "ADD DRINK", True)
 
     if chosen_index != 0:
         order.customers.append(available_customers[chosen_index - 1])
@@ -411,7 +415,7 @@ def order_random_suggestion(order, **kwargs):
 
 
 def order_confirm(order, **kwargs):
-    chosen_index = print_table_get_index({"": ["No", "Yes"]}, "CONFIRM ORDER?")
+    chosen_index = print_table_get_index(twitch_data, {"": ["No", "Yes"]}, "CONFIRM ORDER?")
 
     if chosen_index == 0:
         return True
@@ -423,10 +427,11 @@ def order_confirm(order, **kwargs):
 
 
 def exit_app(**kwargs):
+    print("")
     print("Exiting App...")
     
 
-def main_menu_loop(menu_data, customers, drinks, orders):
+def main_menu_loop(menu_data, twitch_data, customers, drinks, orders):
     "Menu which serves as the root of the app, and is recursively run until app is exited."
 
     print()
@@ -453,22 +458,34 @@ def main_menu_loop(menu_data, customers, drinks, orders):
         print()
 
     #PRINTS MAIN MENU, GETS USER CHOICE AND RUNS FUNCTION
-    chosen_index = print_table_get_index({"": options_to_print}, "WELCOME TO TONIC!")
+    chosen_index = print_table_get_index(twitch_data, {"": options_to_print}, f"{twitch_data.user.upper()}'S OPTIONS")
     chosen_option = options_to_print[chosen_index]
     chosen_function = menu_data.menu_options[chosen_option]
 
     if chosen_function == "question_user_before_order":
-        question_user_before_order(menu_data, customers, drinks, orders)
+        question_user_before_order(menu_data, twitch_data, customers, drinks, orders)
     else:
-        eval(chosen_function)(customers = customers, drinks = drinks, orders = orders)
+        eval(chosen_function)(customers = customers, drinks = drinks, orders = orders, twitch_data = twitch_data)
 
     #LOOPS MENU UNLESS exit_app() WAS RUN
     if menu_data.menu_options[chosen_option] != "exit_app":
-        main_menu_loop(menu_data, customers, drinks, orders)
+        main_menu_loop(menu_data, twitch_data, customers, drinks, orders)
+
+
+def register_user(twitch_data):
+    print('Hi everyone! Tonic is a Twitch integrated app. Type "me" in chat to try it out. First come, first serve!')
+    print()
+    twitch_data.user = twitch_data.find_command("find user")
+    print(f"{twitch_data.user} is our user. Thanks for volunteering!")
+    print()
+    time.sleep(1)
 
 
 if __name__ == "__main__":  
     customers, drinks, orders = load()
     menu_data = MenuData()
-    print(intro())
-    main_menu_loop(menu_data, customers, drinks, orders)
+    twitch_data = TwitchData()
+
+    register_user(twitch_data)
+    print(intro(twitch_data.user))
+    main_menu_loop(menu_data, twitch_data, customers, drinks, orders)
