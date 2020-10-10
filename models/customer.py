@@ -1,5 +1,7 @@
-from tools.tonic_generic import indexed_menu as i_menu, format_string as fmat
+from tools.tonic_generic import indexed_menu as i_menu
+from tools.tonic_format import format_string as fmat
 from tools.tonic_generic import get_valid_index, get_instance_variables, get_unique_string
+from models.twitch_data import TwitchData as TwitchData
 
 class Customer():
     def __init__(self):
@@ -7,7 +9,7 @@ class Customer():
         self.favourite_drink = None
 
 
-    def choose_name(self, existing_customers: ["Customer"], cancel_strings: [str] = ["", "cancel"]) -> str:
+    def choose_name(self, existing_customers: ["Customer"], twitch_data, cancel_strings: [str] = ["", "cancel"]) -> str:
         "Continually asks for name from user until a unqiue name is given and saves to self.name; can optionally be given a list of strings which cancel the funtion (use lowercase). Returns the new name, or None if cancelled by user."
         
         unavailable_names = []
@@ -17,7 +19,9 @@ class Customer():
 
         input_message = "Please type the customer's name:"
         fail_message = "This name is already in use. Please try a different name:"
-        user_input = get_unique_string(unavailable_names, input_message, fail_message)
+        print(input_message + " (type 'cancel' to return to menu)")
+        user_input = get_unique_string(twitch_data, unavailable_names, input_message, fail_message)
+        #user_input = twitch_data.find_command("index")
 
         if user_input in cancel_strings or user_input == None:
             return None
@@ -26,7 +30,7 @@ class Customer():
         return self.name
 
 
-    def choose_drink(self, drinks: ["Drink"]) -> str:
+    def choose_drink(self, drinks: ["Drink"], twitch_data) -> str:
         "Prints table of drinks and continually asks for an index selection. Saves to self.favourite_drink;  can optionally be given a list of strings which cancel the funtion (use lowercase). Returns the new name, or None if cancelled by user."
 
         drink_names = get_instance_variables(drinks, "name")
@@ -35,7 +39,8 @@ class Customer():
         for line in print_table:
             print(line)
 
-        chosen_index = get_valid_index(len(drink_names) + 1)
+        #chosen_index = get_valid_index(len(drink_names) + 1)
+        chosen_index = twitch_data.find_command("index", number_of_options = len(drink_names) + 1)
 
         if chosen_index == 0:
             return None

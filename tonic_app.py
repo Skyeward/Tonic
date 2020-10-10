@@ -5,8 +5,10 @@ import time
 
 from tools.tonic_launch import intro as intro
 
-from tools.tonic_generic import indexed_menu as i_menu, format_string as fmat
+from tools.tonic_generic import indexed_menu as i_menu 
 from tools.tonic_generic import get_instance_variables, get_unique_string, print_table_get_index
+
+from tools.tonic_format import format_string as fmat
 
 from models.customer import Customer as Customer
 from models.drink_order import DrinkOrder as DrinkOrder
@@ -35,6 +37,8 @@ def view_customers(**kwargs):
     for line in print_menu:
         print(line)
 
+    time.sleep(1.5)
+
 
 def add_customer(**kwargs):
     new_customer = _new_customer_instance(**kwargs)
@@ -48,13 +52,13 @@ def add_customer(**kwargs):
 
 def _new_customer_instance(**kwargs):
     new_customer = Customer()
-    new_name = new_customer.choose_name(kwargs["customers"])
+    new_name = new_customer.choose_name(kwargs["customers"], kwargs["twitch_data"])
 
     if new_name == None:
         return None
 
     print()
-    new_drink = new_customer.choose_drink(kwargs["drinks"])
+    new_drink = new_customer.choose_drink(kwargs["drinks"], kwargs["twitch_data"])
 
     if new_drink == None:
         return None
@@ -85,10 +89,12 @@ def view_drinks(**kwargs):
     for line in print_menu:
         print(line)
 
+    time.sleep(1.5)
+
 
 def add_drink(**kwargs):
     new_drink = Drink()
-    new_name = new_drink.choose_name(kwargs["drinks"])
+    new_name = new_drink.choose_name(kwargs["twitch_data"], kwargs["drinks"])
 
     if new_name == None:
         return None
@@ -111,7 +117,9 @@ def remove_drink(**kwargs):
 
 
 def search(**kwargs):
-    search_query = input("Search for a name or drink. (Type 'cancel' to return to the Main Menu.)\n>>> ").lower()
+    #search_query = input("Search for a name or drink. (Type 'cancel' to return to the Main Menu.)\n>>> ").lower()
+    print("Search for a name or drink. (Type 'cancel' to return to the Main Menu.)\n>>> ")
+    search_query = kwargs["twitch_data"].find_command("search")
     print()
 
     if search_query == "" or search_query == "cancel":
@@ -215,6 +223,8 @@ def view_previous_order(order, is_selecting_order):
 
     for line in print_table:
         print(line)
+
+    time.sleep(1.5)
     
     if is_selecting_order == False:
         return None
@@ -303,6 +313,7 @@ def order_view(order, **kwargs):
     for line in print_menu:
         print(line)
             
+    time.sleep(1.5)
     print()
     return True
 
@@ -321,7 +332,7 @@ def order_choose_runner(order, **kwargs):
 
 
 def order_new_customer(order, **kwargs):
-    new_customer = _new_customer_instance(customers = order.customers, drinks = kwargs["drinks"])
+    new_customer = _new_customer_instance(customers = order.customers, drinks = kwargs["drinks"], twitch_data = kwargs["twitch_data"])
 
     if new_customer == None:
         print("Cancelling...\n")
@@ -338,7 +349,8 @@ def order_remove_drink(order, **kwargs):
         print("Cancelling...\n")
         return True
 
-    order.remove_drink(order.customers[chosen_index - 1])
+    order.customers.pop(chosen_index - 1)
+    #order.remove_drink(order.customers[chosen_index - 1])
     return True
 
 
@@ -411,6 +423,7 @@ def order_random_suggestion(order, **kwargs):
     random_message = random_message.replace("@", f"{determiner} {random_drink}")
 
     print(random_message)
+    sleep(1.5)
     return True
 
 
@@ -478,7 +491,7 @@ def register_user(twitch_data):
     twitch_data.user = twitch_data.find_command("find user")
     print(f"{twitch_data.user} is our user. Thanks for volunteering!")
     print()
-    time.sleep(1)
+    time.sleep(1.5)
 
 
 if __name__ == "__main__":  
@@ -487,5 +500,12 @@ if __name__ == "__main__":
     twitch_data = TwitchData()
 
     register_user(twitch_data)
-    print(intro(twitch_data.user))
+    intro_ = intro(twitch_data.user)
+    intro_lines = intro_.split("\n")
+
+    for line in intro_lines:
+        print(line)
+        time.sleep(0.15)
+
+    time.sleep(1.5)
     main_menu_loop(menu_data, twitch_data, customers, drinks, orders)

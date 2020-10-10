@@ -1,5 +1,6 @@
 from typing import Iterable
 from models.twitch_data import TwitchData as TwitchData
+from tools.tonic_format import format_string as fmat
 
 #┌─┄┐├┤└┼┘╭╮╰╯┆│ ┬┴
 
@@ -155,35 +156,6 @@ def _centre_align_string(row_width, text):
     return text_with_padding
 
 
-def format_string(string_to_format: str, make_lowercase: bool = True, remove_special_characters: bool = True, char_replacements: {str: str} = None):
-    "Formats a string based on chosen rules. char_replacements will replace the any appearances of keys with their associated value."
-
-    formatted_input = string_to_format
-    
-    if char_replacements != None:
-        for char_to_replace, replacement_char in char_replacements.items():
-            if char_to_replace == replacement_char:
-                continue
-
-            formatted_input = formatted_input.replace(char_to_replace, replacement_char)
-    
-    formatted_input = formatted_input.strip()
-
-    formatted_input = formatted_input.replace("'", "")
-    formatted_input = formatted_input.replace("--", " ")
-
-    while formatted_input.find("  ") != -1: #removes any spacing larger than a single space
-        formatted_input = formatted_input.replace("  ", " ")
-
-    if remove_special_characters == True:
-        formatted_input = "".join(char for char in formatted_input if ord(char) > 31 and ord(char) < 126)
-
-    if make_lowercase == True:
-        formatted_input = formatted_input.lower()
-    
-    return formatted_input
-
-
 def get_instance_variables(instances: [type], variable_name: str):
     "Returns a list of values for a given variable name in a list of class instances."
 
@@ -198,13 +170,13 @@ def get_instance_variables(instances: [type], variable_name: str):
 def get_valid_index(twitch_data, number_of_options: int, fail_message: [str] = None, input_indicator: str = ">>> ") -> int:
     "Continues to take user inputs until the user types an integer between zero (inclusive) and number_of_options (exclusive)."
     
-    return twitch_data.find_command("index", number_of_options)
+    return twitch_data.find_command("index", number_of_options = number_of_options)
 
     #BEFORE TWITCH INTEGRATION
     if number_of_options < 1:
         raise ValueError("number of options must be an integer greater than zero")
     
-    user_input = format_string(input(input_indicator), False, True)
+    user_input = fmat(input(input_indicator), False, True)
 
     try:
         user_input = int(user_input)
@@ -220,8 +192,10 @@ def get_valid_index(twitch_data, number_of_options: int, fail_message: [str] = N
         return get_valid_index(number_of_options, fail_message, input_indicator)
 
 
-def get_unique_string(unavailable_strings: [str], input_message: str, fail_message: str, cancel_strings: [str] = ["", "cancel"]) -> str:
+def get_unique_string(twitch_data, unavailable_strings: [str], input_message: str, fail_message: str, cancel_strings: [str] = ["", "cancel"]) -> str:
     "Continually asks for string from user until a string is given not in unavailable_strings. Can optionally be given a list of strings which cancel the funtion (use lowercase). Returns the new name, or None if cancelled by user."
+    
+    return twitch_data.find_command("unique string", unavailable_strings = unavailable_strings)
     
     input_is_unique = False
         
@@ -240,7 +214,7 @@ def get_unique_string(unavailable_strings: [str], input_message: str, fail_messa
     print(input_message)
 
     while input_is_unique == False:
-        user_input = format_string(input(">>> "))
+        user_input = fmat(input(">>> "))
 
         if user_input in cancel_strings:
             return None

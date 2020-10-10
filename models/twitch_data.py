@@ -1,4 +1,6 @@
 import socket
+import time
+from tools.tonic_format import format_string as fmat
 
 class TwitchData():
     def __init__(self):
@@ -72,6 +74,8 @@ class TwitchData():
                     if message_type == "find user":
                         if self.get_message(line).lower().replace('"', "'").replace("'", '"').replace("!", "").replace(".", "").replace(" ", "") == "me":
                             self.user = self.get_user(line)
+
+                            time.sleep(0.1)
                             return self.user
                     elif message_type == "index":
                         if self.get_user(line) == self.user:
@@ -81,6 +85,22 @@ class TwitchData():
                                 index = int(message)
 
                                 if (0 <= index < kwargs["number_of_options"]):
+                                    
+                                    time.sleep(0.1)
                                     return index
                             except:
-                                pass                  
+                                pass
+                    elif message_type == "search":
+                        if self.get_user(line) == self.user:
+                            
+                            time.sleep(0.1)
+                            return fmat(self.get_message(line)).lower()
+                    elif message_type == "unique string":
+                        if self.get_user(line) == self.user:
+                            message = fmat(self.get_message(line)).lower()
+
+                            if message in kwargs["unavailable_strings"]:
+                                print("That already exists. Try a different name!")
+                            else:
+                                time.sleep(0.1)
+                                return message

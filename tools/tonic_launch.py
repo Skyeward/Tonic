@@ -9,7 +9,7 @@ def intro(user):
     #+#      #+#    #+#   #+#   #+#+#   #+#   #+#    #+# 
     ###       ########    ###    ####   ###    ########"""
 
-    welcome_message = f"Welcome to Tonic {user}!"
+    welcome_message = f"Welcome to Tonic, {user}!"
 
     rand_int = randrange(0, 5)
 
@@ -20,7 +20,7 @@ def intro(user):
     elif rand_int == 2:
         ascii_title = ascii_title.replace('#', '^').replace('+', 'X').replace(':', 'v')
     elif rand_int == 3:
-        ascii_title = """*********     ********    ****    ***   ***    ******** 
+        ascii_title = """***********   ********    ****    ***   ***    ******** 
     ***      ***    ***   *****   ***   ***   ***     ** 
     ***      ***    ***   ******  ***   ***   ***      
     /\/      \/\    /\/   /\/ /\/ /\/   \/\   /\/       

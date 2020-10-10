@@ -5,7 +5,7 @@ class Drink():
         self.name = None
 
     
-    def choose_name(self, existing_drinks: ["Drink"], cancel_strings: [str] = ["", "cancel"]) -> str:
+    def choose_name(self, twitch_data, existing_drinks: ["Drink"], cancel_strings: [str] = ["", "cancel"]) -> str:
         "Shows available drinks asks for drink from user until a unqiue name is given and saves to self.name; can optionally be given a list of strings which cancel the funtion (use lowercase). Returns the new name, or None if cancelled by user."
 
         unavailable_drinks = []
@@ -15,7 +15,9 @@ class Drink():
 
         input_message = "Please type the name of the new drink:"
         fail_message = "This drink has already been added. Please try a different drink:"
-        user_input = get_unique_string(unavailable_drinks, input_message, fail_message)
+        print(input_message)
+        user_input = get_unique_string(twitch_data, unavailable_drinks, input_message, fail_message)
+        #user_input = get_unique_string(unavailable_drinks, input_message, fail_message)
 
         self.name = user_input
         return self.name
