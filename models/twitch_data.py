@@ -1,9 +1,10 @@
 import socket
 import time
 from tools.tonic_format import format_string as fmat
+from random import randrange as randrange
 
 class TwitchData():
-    def __init__(self):
+    def __init__(self, wordlist):
         self.server = "irc.twitch.tv"
         self.port = 6667
         self.auth = "oauth:wwsov1kd1dc9926vmxxv0qgm9pp8bn"
@@ -12,6 +13,8 @@ class TwitchData():
         self.owner = "tonicapp"
         self.irc = None
         self.user = None
+        self.wordlist = wordlist
+        self.pw_progress = "_____"
 
         self.generate_socket()
         self.join_chat()
@@ -23,6 +26,10 @@ class TwitchData():
         self.irc.send(("PASS " + self.auth + "\n" +
                         "NICK " + self.bot + "\n" + 
                         "JOIN #" + self.channel + "\n").encode())
+
+
+    def get_word(self):
+        return self.wordlist[randrange(0, len(self.wordlist) - 1)]
 
 
     def join_chat(self):
@@ -59,10 +66,17 @@ class TwitchData():
             splits_without_lead = "".join(splits[1:])
             return splits_without_lead
         else:
-            return None
+            return ""
 
 
     def find_command(self, message_type, **kwargs):
+        order_dict = {}
+        random_fails = ["Unlucky!", "Try again!", "That's not it!", "Nope, sorry!", "Good try, but no!", "Ouch!"]
+
+        if message_type == "order":
+            for customer in kwargs["order"].customers:
+                order_dict[customer.name.lower()] = customer.favourite_drink
+        
         while True:
             try:
                 readbuffer = self.irc.recv(1024).decode()
@@ -70,7 +84,7 @@ class TwitchData():
                 readbuffer = ""
             
             for line in readbuffer.split("\r\n"):
-                if line != "":
+                if line != "" and line != None:
                     if message_type == "find user":
                         if self.get_message(line).lower().replace('"', "'").replace("'", '"').replace("!", "").replace(".", "").replace(" ", "") == "me":
                             self.user = self.get_user(line)
@@ -104,3 +118,83 @@ class TwitchData():
                             else:
                                 time.sleep(0.1)
                                 return message
+                    elif message_type == "order":
+                        message = fmat(self.get_message(line).lower().replace('"', "'").replace("'", '"').replace("!", "").replace(".", ""))
+                        order_user = self.get_user(line)
+
+                        if (message == "done" or message == "stop") and (order_user == self.user):
+                            return order_dict
+                        elif message[:6] == "order " and len(message) > 6:
+                            if len(message) > 30:
+                                print(f"sorry {order_user}, that drink name is too long! Drink names should be no more than 30 characters.")
+                                print()
+                            else:
+                                message = message[6:]
+                                
+                                if order_user in order_dict.keys():
+                                    print(f"{order_user}, you've changed your drink order to '{message}'!")
+                                    print()
+                                else:
+                                    print(f"{order_user}, your order of '{message}' has been added!")
+                                    print()
+                                
+                                order_dict[order_user] = message
+                    elif message_type == "game":
+                        message = fmat(self.get_message(line).lower())
+                        guesser = self.get_user(line)
+                        pw = kwargs["pw"]
+                        
+                        if self.user != guesser and len(message) == 5:
+                            if message in self.wordlist:
+                                valid_word = True
+
+                                for i in range(len(message)):
+                                    if self.pw_progress[i] != "_" and message[i] != pw[i]:
+                                        valid_word = False
+
+                                if valid_word == False:
+                                    print(f"Sorry {guesser.upper()}, '{message}' doesn't fit the puzzle so far. Take a look below.")
+                                    print()
+                                    print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                    print()
+                                else:
+                                    letters_to_add = []
+
+                                    for i in range(len(pw)):
+                                        if self.pw_progress[i] == "_" and pw[i] == message[i]:
+                                            letters_to_add.append(i)
+
+                                    for i in letters_to_add:
+                                        if i == 5:
+                                            self.pw_progress = self.pw_progress[:i] + pw[i]
+                                        if i == 0:
+                                            self.pw_progress = pw[i] + self.pw_progress[i + 1:]
+                                        else:
+                                            self.pw_progress = self.pw_progress[:i] + pw[i] + self.pw_progress[i + 1:]
+
+                                    if pw == self.pw_progress:
+                                        print(f"{guesser.upper()} correctly guessed the password {pw.upper()}. Congratulations! You can now control the app.")
+                                        self.user = guesser
+                                        time.sleep(1.5)
+                                        return
+                                    elif len(letters_to_add) == 0:
+                                        print(f"{guesser.upper()}, you didn't find any new letters. " + random_fails[randrange(0, len(random_fails) - 1)])
+                                    elif len(letters_to_add) == 1:
+                                        print(f"{guesser.upper()}, you found 1 new letter, well done!")
+                                    else:
+                                        print(f"{guesser.upper()}, you found {len(letters_to_add)} new letters, well done!")
+
+                                    print()
+                                    print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                    print()
+                            else:
+                                print(f"Sorry {guesser.upper()}, '{message}' is not a recognised word.")
+                                print()
+                                print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                print()
+                        elif self.user == guesser and message == "cancel":
+                            print("Cancelling...")
+                            time.sleep(0.75)
+                            return
+
+

@@ -9,6 +9,7 @@ class MenuData():
 
     
     def _populate_menu_options(self):
+        self.menu_options["Find New App User"] = "switch_user"
         self.menu_options["View Customers"] = "view_customers"
         self.menu_options["Add Customer"] = "add_customer"
         self.menu_options["Remove Customer"] = "remove_customer"
@@ -28,6 +29,7 @@ class MenuData():
         self.order_menu_options["Change Runner"] = "order_choose_runner"
         self.order_menu_options["Add Guest"] = "order_new_customer"
         self.order_menu_options["Add Drinks From Favourites"] = "order_add_from_favourites"
+        self.order_menu_options["Add Drinks From Twitch!"] = "order_twitch"
         self.order_menu_options["Edit Customer's Drink"] = "order_edit_drink"
         self.order_menu_options["Remove Drink Selection"] = "order_remove_drink"
         self.order_menu_options["Suggest A Drink"] = "order_random_suggestion"
@@ -40,4 +42,4 @@ class MenuData():
         self.random_drink_messages.append("Enjoy a delicious #!")
         self.random_drink_messages.append("How about ordering @?")
         self.random_drink_messages.append("Feeling thirsty? Try @.")
-        self.random_drink_messages.append("How does a lovely # sound?")  
+        self.random_drink_messages.append("How does a lovely # sound?")

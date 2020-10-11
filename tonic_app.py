@@ -2,6 +2,7 @@ from random import randrange as randrange
 from datetime import datetime
 import pymysql as sql
 import time
+import csv
 
 from tools.tonic_launch import intro as intro
 
@@ -25,7 +26,15 @@ def load():
     drinks = db(sql.get_all_drinks)
     orders = db(sql.get_all_orders)
 
-    return (customers, drinks, orders)
+    wordlist = []
+
+    with open("available_passwords.txt", "r") as file_:
+        drinks_file_reader = csv.reader(file_, quoting = csv.QUOTE_ALL)
+        
+        for drink in drinks_file_reader:
+            wordlist.append(*drink)
+
+    return (customers, drinks, orders, wordlist)
 
 
 def view_customers(**kwargs): 
@@ -423,7 +432,7 @@ def order_random_suggestion(order, **kwargs):
     random_message = random_message.replace("@", f"{determiner} {random_drink}")
 
     print(random_message)
-    sleep(1.5)
+    time.sleep(1.5)
     return True
 
 
@@ -437,6 +446,28 @@ def order_confirm(order, **kwargs):
         kwargs["customers"].append(order)
         db(sql.add_order, order)
         return False
+
+
+def order_twitch(order, **kwargs):
+    print('Type "order _____" followed by a drink to add it to the order! Eg. "order coffee"')
+    print()
+    print(f'{kwargs["twitch_data"].user.upper()} - please type "done" or "stop" to stop adding drinks from chat.')
+    print()
+    order_dict = kwargs["twitch_data"].find_command("order", **kwargs, order = order)
+    customer_list = []
+
+    print(order_dict)
+
+    for customer, drink in order_dict.items():
+        new_customer = Customer()
+        new_customer.name = customer
+        new_customer.favourite_drink = drink
+        customer_list.append(new_customer)
+
+    print(get_instance_variables(customers, "name"))
+
+    order.customers = customer_list
+    return True
 
 
 def exit_app(**kwargs):
@@ -494,10 +525,41 @@ def register_user(twitch_data):
     time.sleep(1.5)
 
 
+def switch_user(**kwargs):
+    kwargs["twitch_data"].pw_progress = "_____"
+    
+    print("A random five letter password has been set. Make guesses in chat by typing five letter words.")
+    print()
+    time.sleep(2.5)
+    print("If your guess contains any correct letters, they'll be added to the puzzle!")
+    print()
+    time.sleep(2.5)
+    print("Your password guesses must:")
+    time.sleep(0.5)
+    print("    1) Be real five letter words")
+    time.sleep(0.5)
+    print("    2) Use the letters that have been discovered so far")
+    print()
+    time.sleep(2.5)
+    print("Eg. if the puzzle so far is 'G _ _ _ N', you could guess 'green' or 'glean'.")
+    print()
+    time.sleep(2.5)
+    print("Whoever correctly guesses the word will take control of the app. Good luck!")
+    print()
+    time.sleep(2.5)
+
+    pw = kwargs["twitch_data"].get_word()
+
+    print("_ _ _ _ _")
+    print()
+    
+    kwargs["twitch_data"].find_command("game", **kwargs, pw = pw)
+
+
 if __name__ == "__main__":  
-    customers, drinks, orders = load()
+    customers, drinks, orders, words = load()
     menu_data = MenuData()
-    twitch_data = TwitchData()
+    twitch_data = TwitchData(words)
 
     register_user(twitch_data)
     intro_ = intro(twitch_data.user)
