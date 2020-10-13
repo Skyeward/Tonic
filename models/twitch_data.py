@@ -4,7 +4,7 @@ from tools.tonic_format import format_string as fmat
 from random import randrange as randrange
 
 class TwitchData():
-    def __init__(self, wordlist):
+    def __init__(self, wordlist, possible_passwords):
         self.server = "irc.twitch.tv"
         self.port = 6667
         self.auth = "oauth:wwsov1kd1dc9926vmxxv0qgm9pp8bn"
@@ -13,6 +13,7 @@ class TwitchData():
         self.owner = "tonicapp"
         self.irc = None
         self.user = None
+        self.possible_passwords = possible_passwords
         self.wordlist = wordlist
         self.pw_progress = "_____"
 
@@ -29,7 +30,7 @@ class TwitchData():
 
 
     def get_word(self):
-        return self.wordlist[randrange(0, len(self.wordlist) - 1)]
+        return self.possible_passwords[randrange(0, len(self.possible_passwords) - 1)]
 
 
     def join_chat(self):
@@ -155,7 +156,7 @@ class TwitchData():
                                 if valid_word == False:
                                     print(f"Sorry {guesser.upper()}, '{message}' doesn't fit the puzzle so far. Take a look below.")
                                     print()
-                                    print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                    print(self.pw_progress[0].upper() + " " + self.pw_progress[1].upper() + " " + self.pw_progress[2].upper() + " " + self.pw_progress[3].upper() + " " + self.pw_progress[4].upper())
                                     print()
                                 else:
                                     letters_to_add = []
@@ -185,16 +186,16 @@ class TwitchData():
                                         print(f"{guesser.upper()}, you found {len(letters_to_add)} new letters, well done!")
 
                                     print()
-                                    print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                    print(self.pw_progress[0].upper() + " " + self.pw_progress[1].upper() + " " + self.pw_progress[2].upper() + " " + self.pw_progress[3].upper() + " " + self.pw_progress[4].upper())
                                     print()
                             else:
                                 print(f"Sorry {guesser.upper()}, '{message}' is not a recognised word.")
                                 print()
-                                print(self.pw_progress[0] + " " + self.pw_progress[1] + " " + self.pw_progress[2] + " " + self.pw_progress[3] + " " + self.pw_progress[4])
+                                print(self.pw_progress[0].upper() + " " + self.pw_progress[1].upper() + " " + self.pw_progress[2].upper() + " " + self.pw_progress[3].upper() + " " + self.pw_progress[4].upper())
                                 print()
                         elif self.user == guesser and message == "cancel":
-                            print("Cancelling...")
-                            time.sleep(0.75)
+                            print(f"Game over! The word was {pw.upper()}. The app user is still {self.user}.")
+                            time.sleep(1.5)
                             return
 
 

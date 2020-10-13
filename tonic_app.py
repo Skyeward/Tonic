@@ -34,7 +34,15 @@ def load():
         for drink in drinks_file_reader:
             wordlist.append(*drink)
 
-    return (customers, drinks, orders, wordlist)
+    possible_passwords = []
+
+    with open("FiveLetterWordsGood.txt", "r") as file_:
+        drinks_file_reader = csv.reader(file_, quoting = csv.QUOTE_ALL)
+        
+        for drink in drinks_file_reader:
+            possible_passwords.append(*drink)
+
+    return (customers, drinks, orders, wordlist, possible_passwords)
 
 
 def view_customers(**kwargs): 
@@ -443,7 +451,7 @@ def order_confirm(order, **kwargs):
         return True
     else:
         order.time_placed = str(datetime.utcnow()).split(".")[0]
-        kwargs["customers"].append(order)
+        kwargs["orders"].append(order)
         db(sql.add_order, order)
         return False
 
@@ -548,7 +556,7 @@ def switch_user(**kwargs):
     print()
     time.sleep(2.5)
 
-    pw = kwargs["twitch_data"].get_word()
+    pw = kwargs["twitch_data"].get_word().lower()
 
     print("_ _ _ _ _")
     print()
@@ -557,9 +565,9 @@ def switch_user(**kwargs):
 
 
 if __name__ == "__main__":  
-    customers, drinks, orders, words = load()
+    customers, drinks, orders, words, passwords = load()
     menu_data = MenuData()
-    twitch_data = TwitchData(words)
+    twitch_data = TwitchData(words, passwords)
 
     register_user(twitch_data)
     intro_ = intro(twitch_data.user)
