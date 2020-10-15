@@ -167,7 +167,7 @@ def search(**kwargs):
     
     if len(search_results) + len(exact_results) == 0:
         print("No matches found.")
-        _search_again()
+        _search_again(**kwargs)
         return
 
     name_column = []

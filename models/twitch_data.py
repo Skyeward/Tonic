@@ -104,7 +104,7 @@ class TwitchData():
                                     time.sleep(0.1)
                                     return index
                             except:
-                                pass
+                                return pass
                     elif message_type == "search":
                         if self.get_user(line) == self.user:
                             
